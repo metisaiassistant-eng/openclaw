@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/meeting-workflow-ingress",
+  "version": "2026.3.10",
+  "private": true,
+  "description": "External OpenClaw plugin for Fathom meeting ingress forwarding",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

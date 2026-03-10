@@ -1,0 +1,105 @@
+{
+  "id": "meeting-workflow-ingress",
+  "uiHints": {
+    "enabled": {
+      "label": "Enable Meeting Ingress"
+    },
+    "routePath": {
+      "label": "Ingress Route Path"
+    },
+    "maxBodyBytes": {
+      "label": "Max Body Bytes",
+      "advanced": true
+    },
+    "sourceProvider": {
+      "label": "Source Provider"
+    },
+    "source.fathom.apiKey": {
+      "label": "Fathom API Key",
+      "sensitive": true
+    },
+    "source.fathom.webhookSecret": {
+      "label": "Fathom Webhook Secret",
+      "sensitive": true
+    },
+    "source.fathom.baseUrl": {
+      "label": "Fathom Base URL",
+      "advanced": true
+    },
+    "forward.hooksBaseUrl": {
+      "label": "OpenClaw Hooks Base URL"
+    },
+    "forward.hooksPath": {
+      "label": "OpenClaw Hooks Path",
+      "advanced": true
+    },
+    "forward.hooksToken": {
+      "label": "OpenClaw Hooks Token",
+      "sensitive": true
+    },
+    "forward.timeoutMs": {
+      "label": "Forward Timeout (ms)",
+      "advanced": true
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "routePath": {
+        "type": "string"
+      },
+      "maxBodyBytes": {
+        "type": "integer",
+        "minimum": 1024
+      },
+      "sourceProvider": {
+        "type": "string",
+        "enum": ["fathom"]
+      },
+      "source": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fathom": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "apiKey": {
+                "type": "string"
+              },
+              "webhookSecret": {
+                "type": "string"
+              },
+              "baseUrl": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "forward": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hooksBaseUrl": {
+            "type": "string"
+          },
+          "hooksPath": {
+            "type": "string"
+          },
+          "hooksToken": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "minimum": 100
+          }
+        }
+      }
+    }
+  }
+}
