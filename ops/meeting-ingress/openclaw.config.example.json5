@@ -1,4 +1,17 @@
 {
+  agents: {
+    list: [
+      {
+        id: "meeting-ops",
+        workspace: "~/.openclaw/workspace-meeting-ops",
+        model: "openai/gpt-5.2-mini",
+        tools: {
+          allow: ["read", "write", "edit", "apply_patch", "exec", "process"],
+          deny: ["browser", "canvas", "nodes", "cron"],
+        },
+      },
+    ],
+  },
   hooks: {
     enabled: true,
     path: "/hooks",
@@ -44,18 +57,5 @@
         },
       },
     },
-  },
-  agents: {
-    list: [
-      {
-        id: "meeting-ops",
-        workspace: "~/.openclaw/workspace-meeting-ops",
-        model: "openai/gpt-5.2-mini",
-        tools: {
-          allow: ["read", "write", "edit", "apply_patch", "exec", "process"],
-          deny: ["browser", "canvas", "nodes", "cron"],
-        },
-      },
-    ],
   },
 }
