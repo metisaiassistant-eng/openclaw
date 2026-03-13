@@ -1,0 +1,7 @@
+tunnel: openclaw-meeting
+credentials-file: /home/valverdesolera/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  - hostname: hooks.metisaiassistant.win
+    service: http://127.0.0.1:18789
+  - service: http_status:404

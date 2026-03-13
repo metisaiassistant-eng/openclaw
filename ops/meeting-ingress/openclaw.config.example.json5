@@ -1,0 +1,48 @@
+{
+  hooks: {
+    enabled: true,
+    path: "/hooks",
+    token: "${OPENCLAW_HOOKS_TOKEN}",
+    defaultSessionKey: "hook:meeting",
+    allowRequestSessionKey: false,
+    allowedAgentIds: ["main"],
+    mappings: [
+      {
+        match: { path: "meeting-source" },
+        action: "agent",
+        agentId: "main",
+        name: "Meeting Source Event",
+        wakeMode: "now",
+        sessionKey: "hook:meeting:{{meetingId}}",
+        deliver: false,
+        thinking: "low",
+        messageTemplate: "Meeting {{meetingId}} ended: {{title}}\\nParticipants: {{participants}}\\n\\nTranscript:\\n{{transcript}}",
+      },
+    ],
+  },
+  plugins: {
+    entries: {
+      "meeting-workflow-ingress": {
+        enabled: true,
+        config: {
+          enabled: true,
+          routePath: "/integrations/source/fathom/webhook",
+          sourceProvider: "fathom",
+          source: {
+            fathom: {
+              apiKey: "${SOURCE_FATHOM_API_KEY}",
+              webhookSecret: "${SOURCE_FATHOM_WEBHOOK_SECRET}",
+              baseUrl: "https://api.fathom.ai/external/v1",
+            },
+          },
+          forward: {
+            hooksBaseUrl: "http://127.0.0.1:18789",
+            hooksPath: "/hooks/meeting-source",
+            hooksToken: "${OPENCLAW_HOOKS_TOKEN}",
+            timeoutMs: 10000,
+          },
+        },
+      },
+    },
+  },
+}
