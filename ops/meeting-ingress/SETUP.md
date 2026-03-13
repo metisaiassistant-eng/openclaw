@@ -35,8 +35,32 @@ openclaw config set hooks.path /hooks
 openclaw config set hooks.token "<OPENCLAW_HOOKS_TOKEN>"
 openclaw config set hooks.defaultSessionKey hook:meeting
 openclaw config set hooks.allowRequestSessionKey false
-openclaw config set hooks.allowedAgentIds '["main"]'
-openclaw config set hooks.mappings '[{"match":{"path":"meeting-source"},"action":"agent","agentId":"main","name":"Meeting Source Event","wakeMode":"now","sessionKey":"hook:meeting:{{meetingId}}","deliver":false,"thinking":"low","messageTemplate":"Meeting {{meetingId}} ended: {{title}}\\nParticipants: {{participants}}\\n\\nTranscript:\\n{{transcript}}"}]'
+openclaw config set hooks.allowedAgentIds '["meeting-ops"]'
+openclaw config set hooks.mappings '[{"match":{"path":"meeting-source"},"action":"agent","agentId":"meeting-ops","name":"Meeting Source Event","wakeMode":"now","sessionKey":"hook:meeting:{{meetingId}}","deliver":false,"thinking":"low","messageTemplate":"Meeting {{meetingId}} ended: {{title}}\\nParticipants: {{participants}}\\n\\nTranscript:\\n{{transcript}}"}]'
+
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+cfg_path = Path.home() / ".openclaw" / "openclaw.json"
+cfg = json.loads(cfg_path.read_text())
+agents = cfg.setdefault("agents", {})
+agent_list = agents.setdefault("list", [])
+
+if not any(agent.get("id") == "meeting-ops" for agent in agent_list):
+    agent_list.append({
+        "id": "meeting-ops",
+        "workspace": "~/.openclaw/workspace-meeting-ops",
+        "model": "openai/gpt-5.2-mini",
+        "tools": {
+            "allow": ["read", "write", "edit", "apply_patch", "exec", "process"],
+            "deny": ["browser", "canvas", "nodes", "cron"],
+        },
+    })
+
+cfg_path.write_text(json.dumps(cfg, indent=2) + "\n")
+print("Ensured meeting-ops agent in", cfg_path)
+PY
 
 openclaw config set plugins.entries.meeting-workflow-ingress.enabled true
 openclaw config set plugins.entries.meeting-workflow-ingress.config.enabled true
@@ -109,3 +133,4 @@ Expected: `HTTP/2 202` and body including `"ok":true`.
 - Never commit live secrets.
 - Rotate exposed tokens/secrets immediately if they were ever pasted in chat/logs.
 - Keep the hook mapping `messageTemplate`; agent mappings require non-empty message text.
+- Keep meeting ingest mapped to `meeting-ops` to isolate automation runs from the primary `main` agent.
