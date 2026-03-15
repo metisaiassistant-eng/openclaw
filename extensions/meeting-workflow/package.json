@@ -1,0 +1,11 @@
+{
+  "name": "@openclaw/meeting-workflow",
+  "version": "2026.3.8",
+  "description": "OpenClaw meeting workflow plugin",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

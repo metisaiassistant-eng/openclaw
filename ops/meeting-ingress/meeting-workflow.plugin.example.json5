@@ -1,0 +1,103 @@
+{
+  plugins: {
+    entries: {
+      "meeting-workflow": {
+        enabled: true,
+        config: {
+          enabled: true,
+          maxBodyBytes: 1048576,
+          forward: {
+            hooksBaseUrl: "http://127.0.0.1:18789",
+            hooksPath: "/hooks/meeting-source",
+            hooksToken: "${OPENCLAW_HOOKS_TOKEN}",
+            timeoutMs: 10000,
+          },
+          accounts: [
+            {
+              accountKey: "job-a",
+              label: "Consulting",
+              email: "me+consulting@example.com",
+              routePath: "/integrations/source/fathom/job-a/webhook",
+              provider: "fathom",
+              fathom: {
+                apiKey: "${SOURCE_FATHOM_JOB_A_API_KEY}",
+                webhookSecret: "${SOURCE_FATHOM_JOB_A_WEBHOOK_SECRET}",
+                baseUrl: "https://api.fathom.ai/external/v1",
+              },
+              documents: {
+                provider: "google_docs",
+                googleDocs: {
+                  rootFolderId: "${DOCUMENT_GOOGLE_DOCS_JOB_A_ROOT_FOLDER_ID}",
+                  accessToken: "${DOCUMENT_GOOGLE_DOCS_JOB_A_ACCESS_TOKEN}",
+                  titlePrefix: "Meeting",
+                },
+              },
+              tasks: {
+                provider: "clickup",
+                clickup: {
+                  listId: "${TASK_CLICKUP_JOB_A_LIST_ID}",
+                  apiKey: "${TASK_CLICKUP_JOB_A_API_KEY}",
+                  assigneeIds: [
+                    "${TASK_CLICKUP_JOB_A_ASSIGNEE_1}",
+                    "${TASK_CLICKUP_JOB_A_ASSIGNEE_2}",
+                  ],
+                },
+              },
+              models: {
+                summary: {
+                  model: "openai/gpt-5.2-mini",
+                  thinking: "low",
+                },
+                actionItems: {
+                  model: "openai/gpt-5.4",
+                  thinking: "medium",
+                },
+              },
+            },
+            {
+              accountKey: "job-b",
+              label: "Employer",
+              email: "me+employer@example.com",
+              routePath: "/integrations/source/fathom/job-b/webhook",
+              provider: "fathom",
+              fathom: {
+                apiKey: "${SOURCE_FATHOM_JOB_B_API_KEY}",
+                webhookSecret: "${SOURCE_FATHOM_JOB_B_WEBHOOK_SECRET}",
+                baseUrl: "https://api.fathom.ai/external/v1",
+              },
+              documents: {
+                provider: "google_docs",
+                googleDocs: {
+                  rootFolderId: "${DOCUMENT_GOOGLE_DOCS_JOB_B_ROOT_FOLDER_ID}",
+                  accessToken: "${DOCUMENT_GOOGLE_DOCS_JOB_B_ACCESS_TOKEN}",
+                  titlePrefix: "Meeting",
+                },
+              },
+              tasks: {
+                provider: "clickup",
+                clickup: {
+                  listId: "${TASK_CLICKUP_JOB_B_LIST_ID}",
+                  apiKey: "${TASK_CLICKUP_JOB_B_API_KEY}",
+                  assigneeIds: [
+                    "${TASK_CLICKUP_JOB_B_ASSIGNEE_1}",
+                    "${TASK_CLICKUP_JOB_B_ASSIGNEE_2}",
+                  ],
+                },
+              },
+              models: {
+                summary: {
+                  model: "openai/gpt-5.2-mini",
+                  thinking: "low",
+                },
+                actionItems: {
+                  model: "openai/gpt-5.4",
+                  thinking: "medium",
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+}
