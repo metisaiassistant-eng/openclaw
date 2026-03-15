@@ -6,17 +6,17 @@ Note: the currently deployed ingress on the server uses the earlier ingress plug
 
 ## Overview
 
-The feature uses an external OpenClaw plugin that receives Fathom webhooks, verifies the webhook signature, normalizes the payload, and forwards the normalized event into OpenClaw hooks.
+The feature uses an OpenClaw plugin that receives Fathom webhooks, verifies the webhook signature, normalizes the payload, and runs the meeting workflow directly.
 
 Flow:
 
 1. Fathom sends a webhook to `https://hooks.metisaiassistant.win/integrations/source/fathom/webhook`
 2. Cloudflare Tunnel routes the request to the Ubuntu server
-3. OpenClaw gateway receives the request through the `meeting-workflow-ingress` plugin
+3. OpenClaw gateway receives the request through the meeting workflow plugin
 4. The plugin verifies `webhook-signature`
 5. The plugin maps the payload to `meeting-event-v1`
-6. The plugin forwards the event to `/hooks/meeting-source`
-7. OpenClaw hooks mapping dispatches the event to the `meeting-ops` agent
+6. The plugin executes the meeting workflow runtime directly
+7. The workflow generates summary + action items, writes Google Docs output, creates ClickUp tasks, and stores a run report
 
 ## Code Location
 
@@ -54,6 +54,9 @@ ingress:
 
 ## OpenClaw Hook Configuration
 
+Legacy note: hooks and the `meeting-ops` agent were used in the earlier ingress-only setup.
+The new `extensions/meeting-workflow/` runtime executes the workflow directly from the webhook route and does not depend on hook dispatch for normal production processing.
+
 Hooks are enabled with:
 
 - `hooks.path = /hooks`
@@ -69,6 +72,7 @@ Hook mapping:
 - session key: `hook:meeting:{{meetingId}}`
 
 The mapping includes a required `messageTemplate` because OpenClaw agent hook mappings require a non-empty message.
+This remains useful for manual/legacy paths, but the current long-term workflow runtime no longer depends on this mapping to perform the real meeting processing.
 
 Current template:
 
@@ -96,6 +100,8 @@ Restricted tools:
 - deny: `browser`, `canvas`, `nodes`, `cron`
 
 This keeps meeting automation isolated from the main interactive agent.
+
+In the new runtime, `meeting-ops` is still useful for manual investigation and tool-driven dry runs, but the webhook path itself now runs the workflow directly.
 
 ## Plugin Configuration
 
@@ -134,6 +140,8 @@ Long-term workflow tools exposed by the new extension:
 
 - `meeting-workflow-analyze` - summary + action-items extraction only
 - `meeting-workflow-run` - full workflow execution (summary + action items + Google Docs + ClickUp)
+
+Production webhook handling should use direct workflow execution in the plugin route handler rather than relying on the agent to decide whether to invoke these tools.
 
 ## Fathom Configuration
 

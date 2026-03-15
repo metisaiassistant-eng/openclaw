@@ -27,7 +27,7 @@
               documents: {
                 provider: "google_docs",
                 googleDocs: {
-                  rootFolderId: "${DOCUMENT_GOOGLE_DOCS_JOB_A_ROOT_FOLDER_ID}",
+                  rootFolderId: "1rj4A0ntEF5ksjNqPtdpRvP2C1MwJzO-I",
                   accessToken: "${DOCUMENT_GOOGLE_DOCS_JOB_A_ACCESS_TOKEN}",
                   titlePrefix: "Meeting",
                 },
@@ -68,7 +68,7 @@
               documents: {
                 provider: "google_docs",
                 googleDocs: {
-                  rootFolderId: "${DOCUMENT_GOOGLE_DOCS_JOB_B_ROOT_FOLDER_ID}",
+                  rootFolderId: "1rj4A0ntEF5ksjNqPtdpRvP2C1MwJzO-I",
                   accessToken: "${DOCUMENT_GOOGLE_DOCS_JOB_B_ACCESS_TOKEN}",
                   titlePrefix: "Meeting",
                 },

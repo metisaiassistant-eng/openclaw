@@ -29,6 +29,20 @@ describe("meeting-workflow plugin registration", () => {
               apiKey: "api-key-a",
               webhookSecret: "secret-a",
             },
+            documents: {
+              provider: "google_docs",
+              googleDocs: {
+                rootFolderId: "root-a",
+                accessToken: "google-token-a",
+              },
+            },
+            tasks: {
+              provider: "clickup",
+              clickup: {
+                listId: "list-a",
+                apiKey: "clickup-token-a",
+              },
+            },
           },
           {
             accountKey: "job-b",
@@ -39,10 +53,30 @@ describe("meeting-workflow plugin registration", () => {
               apiKey: "api-key-b",
               webhookSecret: "secret-b",
             },
+            documents: {
+              provider: "google_docs",
+              googleDocs: {
+                rootFolderId: "root-b",
+                accessToken: "google-token-b",
+              },
+            },
+            tasks: {
+              provider: "clickup",
+              clickup: {
+                listId: "list-b",
+                apiKey: "clickup-token-b",
+              },
+            },
           },
         ],
       },
-      runtime: {} as never,
+      runtime: {
+        state: {
+          resolveStateDir() {
+            return "/tmp/openclaw-test-state";
+          },
+        },
+      } as never,
       logger: {
         info() {},
         warn() {},
@@ -93,7 +127,13 @@ describe("meeting-workflow plugin registration", () => {
       pluginConfig: {
         enabled: false,
       },
-      runtime: {} as never,
+      runtime: {
+        state: {
+          resolveStateDir() {
+            return "/tmp/openclaw-test-state";
+          },
+        },
+      } as never,
       logger: {
         info() {},
         warn() {},

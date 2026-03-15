@@ -434,12 +434,12 @@ Done when:
 Tasks:
 
 - add a deterministic runtime entry under `src/runtime/`
-- `meeting-ops` should trigger workflow execution through plugin code, not ad-hoc prompt-only logic
-- preserve session key `hook:meeting:{{meetingId}}`
+- support `meeting-ops` for manual and dry-run invocation through plugin tools
+- for production webhook handling, execute the workflow directly in the route handler
 
 Done when:
 
-- incoming hook event can run the actual workflow, not only create an agent message
+- incoming webhook executes the workflow directly without depending on agent prompt/tool choice
 
 ### Phase 8 — Tests and live validation
 
