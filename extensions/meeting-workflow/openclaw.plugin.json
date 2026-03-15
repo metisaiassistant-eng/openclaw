@@ -1,0 +1,182 @@
+{
+  "id": "meeting-workflow",
+  "uiHints": {
+    "enabled": {
+      "label": "Enable Meeting Workflow"
+    },
+    "maxBodyBytes": {
+      "label": "Max Body Bytes",
+      "advanced": true
+    },
+    "forward.hooksBaseUrl": {
+      "label": "Hooks Base URL"
+    },
+    "forward.hooksPath": {
+      "label": "Hooks Path"
+    },
+    "forward.hooksToken": {
+      "label": "Hooks Token",
+      "sensitive": true
+    },
+    "accounts": {
+      "label": "Source Accounts"
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "maxBodyBytes": {
+        "type": "integer",
+        "minimum": 1024
+      },
+      "forward": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hooksBaseUrl": {
+            "type": "string"
+          },
+          "hooksPath": {
+            "type": "string"
+          },
+          "hooksToken": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "minimum": 100
+          }
+        }
+      },
+      "accounts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "accountKey": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "routePath": {
+              "type": "string"
+            },
+            "provider": {
+              "type": "string",
+              "enum": ["fathom"]
+            },
+            "fathom": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "apiKey": {
+                  "type": "string"
+                },
+                "webhookSecret": {
+                  "type": "string"
+                },
+                "baseUrl": {
+                  "type": "string"
+                }
+              }
+            },
+            "documents": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["google_docs"]
+                },
+                "googleDocs": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "rootFolderId": {
+                      "type": "string"
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "titlePrefix": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "tasks": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["clickup"]
+                },
+                "clickup": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "listId": {
+                      "type": "string"
+                    },
+                    "apiKey": {
+                      "type": "string"
+                    },
+                    "assigneeIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "models": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "summary": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "model": {
+                      "type": "string"
+                    },
+                    "thinking": {
+                      "type": "string",
+                      "enum": ["none", "low", "medium", "high"]
+                    }
+                  }
+                },
+                "actionItems": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "model": {
+                      "type": "string"
+                    },
+                    "thinking": {
+                      "type": "string",
+                      "enum": ["none", "low", "medium", "high"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

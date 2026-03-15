@@ -1,0 +1,128 @@
+# Migration To `meeting-workflow`
+
+This runbook migrates the server from the current ingress-only plugin:
+
+- `external-plugins/meeting-workflow-ingress/`
+
+to the new integrated plugin:
+
+- `extensions/meeting-workflow/`
+
+## Goal
+
+Move to a single plugin that supports:
+
+- multi-account Fathom ingress
+- per-account Google Docs destinations
+- per-account ClickUp destinations
+- per-step LLM model selection
+- cached workflow results and run reports
+
+## Pre-checks
+
+1. Pull the latest branch containing `extensions/meeting-workflow/`.
+2. Confirm the old ingress path is still working before migration.
+3. Prepare all real secrets and destination IDs for each account.
+
+## 1) Install the new plugin
+
+```bash
+openclaw plugins install -l /opt/openclaw/extensions/meeting-workflow
+openclaw plugins enable meeting-workflow
+```
+
+## 2) Configure the new plugin
+
+Use `ops/meeting-ingress/meeting-workflow.plugin.example.json5` as the template.
+
+Important values to set per account:
+
+- `accountKey`
+- `label`
+- `email`
+- `routePath`
+- `fathom.apiKey`
+- `fathom.webhookSecret`
+- `documents.googleDocs.rootFolderId`
+- `documents.googleDocs.accessToken`
+- `tasks.clickup.listId`
+- `tasks.clickup.apiKey`
+- `tasks.clickup.assigneeIds[]`
+- `models.summary`
+- `models.actionItems`
+
+## 3) Update hook mapping to keep using `meeting-ops`
+
+Confirm:
+
+- `hooks.allowedAgentIds` contains `meeting-ops`
+- `hooks.mappings[*].match.path = meeting-source`
+- `hooks.mappings[*].agentId = meeting-ops`
+- `hooks.mappings[*].messageTemplate` exists
+
+## 4) Create per-account Fathom webhooks
+
+For each account, create a webhook using that account's dedicated route path.
+
+Example:
+
+- `https://hooks.metisaiassistant.win/integrations/source/fathom/job-a/webhook`
+- `https://hooks.metisaiassistant.win/integrations/source/fathom/job-b/webhook`
+
+Enable:
+
+- Transcript
+- Summary
+- Action items
+
+## 5) Disable the old plugin after verification
+
+Once the new plugin is confirmed working:
+
+```bash
+openclaw config set plugins.entries.meeting-workflow-ingress.enabled false
+```
+
+## 6) Restart gateway
+
+```bash
+pkill -f "openclaw gateway run" || true
+nohup openclaw gateway run --bind loopback --port 18789 --force > /tmp/openclaw-gateway.log 2>&1 &
+sleep 2
+ss -ltnp | grep 18789
+```
+
+## 7) Verify each new route
+
+Method check:
+
+```bash
+curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/job-a/webhook"
+curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/job-b/webhook"
+```
+
+Expected: `405 Method Not Allowed`
+
+## 8) Validate signed delivery per account
+
+For each account, sign with that account's webhook secret and expect `202 Accepted`.
+
+## 9) Confirm workflow output
+
+Check:
+
+- `meeting-ops` receives the event
+- Google Docs document created/updated in the correct account partition
+- ClickUp tasks created in the correct account list
+- cached reruns do not duplicate output
+
+## Rollback
+
+If needed:
+
+```bash
+openclaw config set plugins.entries.meeting-workflow.enabled false
+openclaw config set plugins.entries.meeting-workflow-ingress.enabled true
+pkill -f "openclaw gateway run" || true
+nohup openclaw gateway run --bind loopback --port 18789 --force > /tmp/openclaw-gateway.log 2>&1 &
+```
