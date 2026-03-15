@@ -8,6 +8,28 @@ describe("resolveMeetingWorkflowConfig", () => {
     expect(config.accounts).toEqual([]);
   });
 
+  it("allows enabled direct-runtime config without forward auth values", () => {
+    const config = resolveMeetingWorkflowConfig({
+      enabled: true,
+      accounts: [
+        {
+          accountKey: "job-a",
+          label: "Consulting",
+          routePath: "/integrations/source/fathom/job-a/webhook",
+          provider: "fathom",
+          fathom: {
+            apiKey: "api-key-a",
+            webhookSecret: "secret-a",
+          },
+        },
+      ],
+    });
+
+    expect(config.enabled).toBe(true);
+    expect(config.forward.hooksBaseUrl).toBe("");
+    expect(config.forward.hooksToken).toBe("");
+  });
+
   it("parses multi-account config", () => {
     const config = resolveMeetingWorkflowConfig({
       enabled: true,

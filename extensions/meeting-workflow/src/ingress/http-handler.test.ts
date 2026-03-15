@@ -128,4 +128,50 @@ describe("createMeetingIngressHttpHandler", () => {
     expect(url).toBe("http://127.0.0.1:18789/hooks/meeting-source");
     expect(init?.body).toContain('"sourceAccountKey":"job-a"');
   });
+
+  it("runs workflow directly when runWorkflow is provided", async () => {
+    const runWorkflow = vi.fn(async () => ({
+      cached: false,
+      reportPath: "/tmp/report.json",
+      doc: { docUrl: "https://docs.example/doc-1" },
+      tasks: { createdCount: 2 },
+    }));
+    const handler = createMeetingIngressHttpHandler({
+      sourceAdapter: {
+        id: "fathom",
+        accountKey: "job-a",
+        async verifyInbound() {},
+        async normalizeInbound() {
+          return {
+            schemaVersion: "meeting-event-v1",
+            meetingId: "meeting-2",
+            source: "fathom",
+            sourceAccountKey: "job-a",
+            sourceAccountLabel: "Consulting",
+            title: "Weekly",
+            endedAt: "2026-03-09T18:30:00Z",
+            transcript: "hello",
+            participants: ["Carlos"],
+          };
+        },
+        async fetchMeetingFallback() {
+          return null;
+        },
+      },
+      maxBodyBytes: 1024,
+      runWorkflow,
+    });
+
+    const req = makeReq({
+      method: "POST",
+      headers: { "webhook-signature": "good" },
+      body: JSON.stringify({ id: "meeting-2" }),
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res._status).toBe(202);
+    expect(runWorkflow).toHaveBeenCalledTimes(1);
+    expect(res._body).toContain('"createdTaskCount":2');
+  });
 });

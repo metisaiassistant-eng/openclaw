@@ -1,6 +1,7 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { resolveMeetingWorkflowConfig } from "./src/config.js";
 import { createMeetingIngressHttpHandler } from "./src/ingress/http-handler.js";
+import { createMeetingWorkflowRuntime } from "./src/runtime/bootstrap.js";
 import { createFathomSourceAdapter } from "./src/sources/fathom/adapter.js";
 import {
   createMeetingWorkflowAnalyzeTool,
@@ -34,9 +35,14 @@ const plugin = {
 
     for (const account of config.accounts) {
       const sourceAdapter = createFathomSourceAdapter(account);
+      const workflowRuntime = createMeetingWorkflowRuntime({
+        api,
+        config,
+        account,
+      });
       const routeHandler = createMeetingIngressHttpHandler({
         sourceAdapter,
-        forward: config.forward,
+        runWorkflow: async (meeting) => await workflowRuntime.run(meeting),
         maxBodyBytes: config.maxBodyBytes,
       });
 

@@ -13,7 +13,13 @@ export type MeetingIngressForwardConfig = {
 
 export type MeetingIngressHttpHandlerInput = {
   sourceAdapter: MeetingSourcePort;
-  forward: MeetingIngressForwardConfig;
+  forward?: MeetingIngressForwardConfig;
+  runWorkflow?: (meeting: MeetingEventV1) => Promise<{
+    cached?: boolean;
+    reportPath?: string;
+    doc?: { docUrl?: string };
+    tasks?: { createdCount?: number };
+  }>;
   maxBodyBytes: number;
   fetchImpl?: typeof fetch;
 };
@@ -124,6 +130,40 @@ export function createMeetingIngressHttpHandler(input: MeetingIngressHttpHandler
       sendJson(res, 400, {
         ok: false,
         error: `source payload normalization failed: ${String(error)}`,
+      });
+      return true;
+    }
+
+    if (input.runWorkflow) {
+      try {
+        const result = await input.runWorkflow(normalized.event);
+        sendJson(res, 202, {
+          ok: true,
+          sourceProvider: input.sourceAdapter.id,
+          sourceAccountKey: input.sourceAdapter.accountKey,
+          meetingId: normalized.event.meetingId,
+          usedFallback: normalized.usedFallback,
+          ...(typeof result.cached === "boolean" ? { cached: result.cached } : {}),
+          ...(result.reportPath ? { reportPath: result.reportPath } : {}),
+          ...(result.doc?.docUrl ? { docUrl: result.doc.docUrl } : {}),
+          ...(typeof result.tasks?.createdCount === "number"
+            ? { createdTaskCount: result.tasks.createdCount }
+            : {}),
+        });
+        return true;
+      } catch (error) {
+        sendJson(res, 500, {
+          ok: false,
+          error: `meeting workflow execution failed: ${String(error)}`,
+        });
+        return true;
+      }
+    }
+
+    if (!input.forward) {
+      sendJson(res, 500, {
+        ok: false,
+        error: "meeting ingress handler missing forward or runWorkflow configuration",
       });
       return true;
     }

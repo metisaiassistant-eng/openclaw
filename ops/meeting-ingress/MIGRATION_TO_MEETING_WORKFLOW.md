@@ -51,14 +51,13 @@ Important values to set per account:
 - `models.summary`
 - `models.actionItems`
 
-## 3) Update hook mapping to keep using `meeting-ops`
+## 3) Direct runtime execution
 
-Confirm:
+The new plugin executes the meeting workflow directly from the webhook route.
 
-- `hooks.allowedAgentIds` contains `meeting-ops`
-- `hooks.mappings[*].match.path = meeting-source`
-- `hooks.mappings[*].agentId = meeting-ops`
-- `hooks.mappings[*].messageTemplate` exists
+No hook mapping or `meeting-ops` agent is required for normal production execution.
+
+`meeting-ops` can still be kept temporarily for manual investigation and dry runs, but it is not required for the webhook path.
 
 ## 4) Create per-account Fathom webhooks
 
@@ -66,14 +65,12 @@ For each account, create a webhook using that account's dedicated route path.
 
 Example:
 
-- `https://hooks.metisaiassistant.win/integrations/source/fathom/job-a/webhook`
-- `https://hooks.metisaiassistant.win/integrations/source/fathom/job-b/webhook`
+- `https://hooks.metisaiassistant.win/integrations/source/fathom/cirruslabs-deloitte/webhook`
+- `https://hooks.metisaiassistant.win/integrations/source/fathom/prediktive-accela/webhook`
 
 Enable:
 
 - Transcript
-- Summary
-- Action items
 
 ## 5) Disable the old plugin after verification
 
@@ -111,7 +108,6 @@ For each account, sign with that account's webhook secret and expect `202 Accept
 
 Check:
 
-- `meeting-ops` receives the event
 - Google Docs document created/updated in the correct account partition
 - ClickUp tasks created in the correct account list
 - cached reruns do not duplicate output

@@ -145,16 +145,8 @@ export function resolveMeetingWorkflowConfig(pluginConfig: unknown): MeetingWork
   }
 
   const issues: MeetingWorkflowConfigIssue[] = [];
-  const hooksBaseUrl = requiredString({
-    key: "forward.hooksBaseUrl",
-    value: forwardRaw.hooksBaseUrl,
-    issues,
-  });
-  const hooksToken = requiredString({
-    key: "forward.hooksToken",
-    value: forwardRaw.hooksToken,
-    issues,
-  });
+  const hooksBaseUrl = asString(forwardRaw.hooksBaseUrl) ?? "";
+  const hooksToken = asString(forwardRaw.hooksToken) ?? "";
   const hooksPath = normalizePath(asString(forwardRaw.hooksPath) ?? DEFAULT_HOOKS_PATH);
   const timeoutMs = asPositiveInt(forwardRaw.timeoutMs) ?? DEFAULT_FORWARD_TIMEOUT_MS;
 
