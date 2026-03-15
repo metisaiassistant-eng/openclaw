@@ -1,7 +1,7 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import type { MeetingActionItemV1 } from "../contracts.js";
-import { runMeetingLlmPrompt } from "./embedded-agent.js";
 import type { MeetingActionItemsStep } from "./ports.js";
+import { runMeetingLlmPrompt } from "./subagent-runner.js";
 
 function stripCodeFences(s: string): string {
   const trimmed = s.trim();

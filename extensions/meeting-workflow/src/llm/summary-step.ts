@@ -1,6 +1,6 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
-import { runMeetingLlmPrompt } from "./embedded-agent.js";
 import type { MeetingSummaryStep } from "./ports.js";
+import { runMeetingLlmPrompt } from "./subagent-runner.js";
 
 export function createMeetingSummaryStep(api: OpenClawPluginApi): MeetingSummaryStep {
   return {
