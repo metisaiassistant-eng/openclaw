@@ -1,36 +1,39 @@
 # Meetings Ops
 
-This document describes how the meeting webhook feature is set up in this fork.
-
-Note: the currently deployed ingress on the server uses the earlier ingress plugin path, while the in-repo long-term implementation target now lives under `extensions/meeting-workflow/`.
+This document describes the current production setup for the meeting workflow feature in this fork.
 
 ## Overview
 
-The feature uses an OpenClaw plugin that receives Fathom webhooks, verifies the webhook signature, normalizes the payload, and runs the meeting workflow directly.
+The feature uses the `meeting-workflow` plugin under `extensions/meeting-workflow/`.
 
-Flow:
+Runtime flow:
 
-1. Fathom sends a webhook to `https://hooks.metisaiassistant.win/integrations/source/fathom/webhook`
-2. Cloudflare Tunnel routes the request to the Ubuntu server
-3. OpenClaw gateway receives the request through the meeting workflow plugin
-4. The plugin verifies `webhook-signature`
-5. The plugin maps the payload to `meeting-event-v1`
-6. The plugin executes the meeting workflow runtime directly
-7. The workflow generates summary + action items, writes Google Docs output, creates ClickUp tasks, and stores a run report
+1. Fathom sends a webhook to an account-specific public route.
+2. Cloudflare Tunnel routes the request to the Ubuntu server.
+3. OpenClaw gateway receives the request through the `meeting-workflow` plugin.
+4. The plugin verifies the `webhook-signature`.
+5. The plugin normalizes the payload into `meeting-event-v1`.
+6. The plugin runs the meeting workflow directly.
+7. The workflow:
+   - generates a summary,
+   - extracts action items,
+   - writes Google Docs output,
+   - writes ClickUp tasks,
+   - persists a cached result and run report.
 
 ## Code Location
 
-- Current ingress implementation: `external-plugins/meeting-workflow-ingress/`
-- Long-term in-repo plugin implementation target: `extensions/meeting-workflow/`
+- Production plugin: `extensions/meeting-workflow/`
 - Setup templates: `ops/meeting-ingress/`
 - Fork implementation guidelines: `FORK_FEATURE_IMPLEMENTATION_GUIDELINES.md`
 - Original design doc: `MeetingWorkflowOpenClaw.md`
 - Implementation plan: `MeetingWorkflowImplementationPlan.md`
 - Migration runbook: `ops/meeting-ingress/MIGRATION_TO_MEETING_WORKFLOW.md`
 
-## Public Endpoint
+## Public Endpoints
 
-- Production webhook URL: `https://hooks.metisaiassistant.win/integrations/source/fathom/webhook`
+- `https://hooks.metisaiassistant.win/integrations/source/fathom/cirruslabs-deloitte/webhook`
+- `https://hooks.metisaiassistant.win/integrations/source/fathom/prediktive-accela/webhook`
 - Public hostname is provided by Cloudflare Tunnel
 - OpenClaw gateway stays bound to loopback: `127.0.0.1:18789`
 
@@ -52,76 +55,48 @@ ingress:
   - service: http_status:404
 ```
 
-## OpenClaw Hook Configuration
+## OpenClaw Runtime State
 
-Legacy note: hooks and the `meeting-ops` agent were used in the earlier ingress-only setup.
-The new `extensions/meeting-workflow/` runtime executes the workflow directly from the webhook route and does not depend on hook dispatch for normal production processing.
+The current production setup no longer depends on hook mappings or a dedicated `meeting-ops` agent for webhook execution.
 
-Hooks are enabled with:
+Normal chat traffic stays on the default/main agent.
 
-- `hooks.path = /hooks`
-- `hooks.defaultSessionKey = hook:meeting`
-- `hooks.allowRequestSessionKey = false`
-- `hooks.allowedAgentIds = ["meeting-ops"]`
+The meeting workflow persists runtime artifacts under the OpenClaw state directory, including:
 
-Hook mapping:
+- cached workflow results
+- run reports
 
-- path: `meeting-source`
-- action: `agent`
-- agent: `meeting-ops`
-- session key: `hook:meeting:{{meetingId}}`
+Example paths:
 
-The mapping includes a required `messageTemplate` because OpenClaw agent hook mappings require a non-empty message.
-This remains useful for manual/legacy paths, but the current long-term workflow runtime no longer depends on this mapping to perform the real meeting processing.
+- `~/.openclaw/meeting-workflow/results/cirruslabs-deloitte/*.json`
+- `~/.openclaw/meeting-workflow/results/prediktive-accela/*.json`
+- `~/.openclaw/meeting-workflow/reports/*.json`
 
-Current template:
+## Account Profiles
 
-```text
-Meeting {{meetingId}} ended: {{title}}
-Participants: {{participants}}
+The workflow is partitioned by account profile, not by free-form email inference.
 
-Transcript:
-{{transcript}}
-```
+Current account keys:
 
-The long-term `meeting-workflow-run` tool should persist run reports and cached workflow results under the plugin state directory so repeated runs for the same unchanged meeting can reuse the previous result.
+- `cirruslabs-deloitte`
+- `prediktive-accela`
 
-## Agent Setup
+Each account profile contains:
 
-Meeting webhooks are routed to a dedicated agent:
-
-- Agent ID: `meeting-ops`
-- Workspace: `~/.openclaw/workspace-meeting-ops`
-- Model: `openai/gpt-5.2-mini`
-
-Restricted tools:
-
-- allow: `read`, `write`, `edit`, `apply_patch`, `exec`, `process`
-- deny: `browser`, `canvas`, `nodes`, `cron`
-
-This keeps meeting automation isolated from the main interactive agent.
-
-In the new runtime, `meeting-ops` is still useful for manual investigation and tool-driven dry runs, but the webhook path itself now runs the workflow directly.
+- dedicated webhook route
+- Fathom API key
+- Fathom webhook secret
+- Google Docs destination config
+- ClickUp destination config
+- per-step LLM model config
 
 ## Plugin Configuration
 
 Plugin ID:
 
-- `meeting-workflow-ingress`
+- `meeting-workflow`
 
-Important config keys:
-
-- `plugins.entries.meeting-workflow-ingress.enabled = true`
-- `plugins.entries.meeting-workflow-ingress.config.enabled = true`
-- `plugins.entries.meeting-workflow-ingress.config.routePath = /integrations/source/fathom/webhook`
-- `plugins.entries.meeting-workflow-ingress.config.sourceProvider = fathom`
-- `plugins.entries.meeting-workflow-ingress.config.source.fathom.apiKey = ${SOURCE_FATHOM_API_KEY}`
-- `plugins.entries.meeting-workflow-ingress.config.source.fathom.webhookSecret = ${SOURCE_FATHOM_WEBHOOK_SECRET}`
-- `plugins.entries.meeting-workflow-ingress.config.forward.hooksBaseUrl = http://127.0.0.1:18789`
-- `plugins.entries.meeting-workflow-ingress.config.forward.hooksPath = /hooks/meeting-source`
-- `plugins.entries.meeting-workflow-ingress.config.forward.hooksToken = ${OPENCLAW_HOOKS_TOKEN}`
-
-Long-term multi-account plugin config template:
+Primary config template:
 
 - `ops/meeting-ingress/meeting-workflow.plugin.example.json5`
 
@@ -130,51 +105,50 @@ This template defines one account profile per Fathom job/email, each with:
 - `accountKey`
 - `label`
 - `email`
-- dedicated `routePath`
-- Fathom credentials
-- Google Docs destination
-- ClickUp destination
-- per-step summary/action-item model settings
+  -- dedicated `routePath`
+  -- Fathom credentials
+  -- Google Docs destination + access token
+  -- ClickUp destination + API key + assignee ids
+  -- per-step summary/action-item model settings
 
-Long-term workflow tools exposed by the new extension:
+Workflow tools exposed by the extension:
 
 - `meeting-workflow-analyze` - summary + action-items extraction only
 - `meeting-workflow-run` - full workflow execution (summary + action items + Google Docs + ClickUp)
 
-Production webhook handling should use direct workflow execution in the plugin route handler rather than relying on the agent to decide whether to invoke these tools.
+Production webhook handling uses direct workflow execution in the plugin route handler rather than relying on the agent to decide whether to invoke these tools.
 
 ## Fathom Configuration
 
-The webhook must be created in Fathom with:
+For each Fathom account, create a webhook with:
 
-- Destination URL: `https://hooks.metisaiassistant.win/integrations/source/fathom/webhook`
+- account-specific Destination URL
 - Scope: `My Recordings`
 - Events enabled:
   - `Transcript`
-  - `Summary`
-  - `Action items`
 
 The webhook secret returned by Fathom must match the secret configured in OpenClaw.
 
 ## Validation
 
-Basic reachability check:
+Basic reachability checks:
 
 ```bash
-curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/webhook"
+curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/cirruslabs-deloitte/webhook"
+curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/prediktive-accela/webhook"
 ```
 
 Expected result:
 
 - `405 Method Not Allowed`
 
-Signed webhook check:
+Signed webhook check example:
 
 ```bash
-payload='{"id":"m-prod-check-001","title":"Webhook Production Check","ended_at":"2026-03-13T18:00:00Z","transcript":"Carlos: checking production webhook path","participants":[{"name":"Carlos"},{"name":"METIS AI Assistant"}]}'
-sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "<SOURCE_FATHOM_WEBHOOK_SECRET>" -binary | openssl base64)
+payload='{"id":"cirruslabs-deloitte-check-009","title":"CirrusLabs Deloitte Check","ended_at":"2026-03-16T01:20:00Z","transcript":"Carlos: final verification after route recovery","participants":[{"name":"Carlos"}]}'
+sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "<SOURCE_FATHOM_CIRRUSLABS_DELOITTE_WEBHOOK_SECRET>" -binary | openssl base64)
 
-curl -i -X POST "https://hooks.metisaiassistant.win/integrations/source/fathom/webhook" \
+curl -i -X POST "https://hooks.metisaiassistant.win/integrations/source/fathom/cirruslabs-deloitte/webhook" \
   -H "Content-Type: application/json" \
   -H "webhook-signature: $sig" \
   --data-binary "$payload"
@@ -184,10 +158,15 @@ Expected result:
 
 - `202 Accepted`
 
+Validated live:
+
+- `cirruslabs-deloitte` -> summary generated, Google Doc created, ClickUp parent + subtask created
+- `prediktive-accela` -> validated separately in production
+
 ## Operational Notes
 
 - Keep real secrets out of git.
 - Keep config templates in `ops/meeting-ingress/` as the source of truth.
 - If Fathom signature checks fail, verify the exact webhook secret for the specific Fathom webhook entry.
-- If hook dispatch fails, verify `messageTemplate` is present and `meeting-ops` is in `hooks.allowedAgentIds`.
 - If public endpoint fails, verify Cloudflare Tunnel service is running and `hooks.metisaiassistant.win` resolves correctly.
+- Google Docs currently uses short-lived access tokens in config; refresh-token or service-account support is the next production hardening step.
