@@ -1,5 +1,6 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import type { MeetingSummaryStep } from "./ports.js";
+import { isMeaningfulMeetingLlmText } from "./sanitize.js";
 import { runMeetingLlmPrompt } from "./subagent-runner.js";
 
 export function createMeetingSummaryStep(api: OpenClawPluginApi): MeetingSummaryStep {
@@ -22,12 +23,16 @@ export function createMeetingSummaryStep(api: OpenClawPluginApi): MeetingSummary
         input.meeting.transcript,
       ].join("\n");
 
-      return await runMeetingLlmPrompt({
+      const result = await runMeetingLlmPrompt({
         api,
         sessionKey: `meeting-workflow:summary:${input.meeting.sourceAccountKey}:${input.meeting.meetingId}`,
         prompt,
         modelConfig: input.config,
       });
+      if (isMeaningfulMeetingLlmText(result)) {
+        return result;
+      }
+      return input.meeting.sourceInsights?.summary?.trim() || "No summary extracted.";
     },
   };
 }

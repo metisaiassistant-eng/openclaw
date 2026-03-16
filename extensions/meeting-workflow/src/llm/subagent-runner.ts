@@ -1,5 +1,6 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import type { MeetingLlmStepConfig } from "./ports.js";
+import { isMeaningfulMeetingLlmText, sanitizeMeetingLlmText } from "./sanitize.js";
 
 type SessionMessageTextPart = { type?: string; text?: string };
 
@@ -32,6 +33,9 @@ function buildExtraSystemPrompt(config?: MeetingLlmStepConfig): string {
   const lines = [
     "You are executing a meeting workflow extraction step.",
     "Follow the task exactly and keep the response concise.",
+    "Never output OpenClaw control tags or messaging directives.",
+    "Never output [[reply_to_current]], [[final]], [[thinking]], or NO_REPLY.",
+    "Return only the requested content.",
   ];
   if (config?.model) {
     lines.push(`Preferred model: ${config.model}`);
@@ -74,8 +78,8 @@ export async function runMeetingLlmPrompt(params: {
   });
   const assistantText = [...session.messages]
     .reverse()
-    .map((message) => extractTextFromUnknownMessage(message))
-    .find((text) => text.length > 0);
+    .map((message) => sanitizeMeetingLlmText(extractTextFromUnknownMessage(message)))
+    .find((text) => isMeaningfulMeetingLlmText(text));
 
   if (!assistantText) {
     throw new Error("Meeting workflow LLM step returned empty output");
