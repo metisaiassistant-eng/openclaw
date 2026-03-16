@@ -56,6 +56,7 @@ describe("resolveMeetingWorkflowConfig", () => {
               refreshToken: "google-refresh-a",
               clientId: "google-client-a",
               clientSecret: "google-secret-a",
+              timeZone: "America/Costa_Rica",
             },
           },
           tasks: {
@@ -88,6 +89,7 @@ describe("resolveMeetingWorkflowConfig", () => {
     expect(config.accounts[0]?.models?.summary?.model).toBe("openai/gpt-5.2-mini");
     expect(config.accounts[0]?.documents?.googleDocs?.accessToken).toBe("google-token-a");
     expect(config.accounts[0]?.documents?.googleDocs?.refreshToken).toBe("google-refresh-a");
+    expect(config.accounts[0]?.documents?.googleDocs?.timeZone).toBe("America/Costa_Rica");
     expect(config.accounts[0]?.tasks?.clickup?.apiKey).toBe("clickup-token-a");
     expect(config.accounts[1]?.routePath).toBe("/integrations/source/fathom/job-b/webhook");
     expect(config.forward.hooksPath).toBe("/hooks/meeting-source");

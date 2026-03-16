@@ -14,14 +14,29 @@ export type GoogleDocsClient = {
   getDocumentBody?: (docId: string) => Promise<string>;
 };
 
-function formatDateParts(endedAt: string): { year: string; month: string; day: string } {
+function formatDateParts(
+  endedAt: string,
+  timeZone?: string,
+): { year: string; month: string; day: string } {
   const date = new Date(endedAt);
   if (Number.isNaN(date.getTime())) {
     throw new Error(`invalid endedAt timestamp: ${endedAt}`);
   }
-  const year = String(date.getUTCFullYear());
-  const month = `${year}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
-  const day = `${month}-${String(date.getUTCDate()).padStart(2, "0")}`;
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const monthPart = parts.find((part) => part.type === "month")?.value;
+  const dayPart = parts.find((part) => part.type === "day")?.value;
+  if (!year || !monthPart || !dayPart) {
+    throw new Error(`failed to derive date parts for ${endedAt}`);
+  }
+  const month = `${year}-${monthPart}`;
+  const day = `${month}-${dayPart}`;
   return { year, month, day };
 }
 
@@ -92,7 +107,10 @@ export function createGoogleDocsDocumentAdapter(params: {
           `google_docs rootFolderId missing for account ${params.account.accountKey}`,
         );
       }
-      const dateParts = formatDateParts(input.endedAt);
+      const dateParts = formatDateParts(
+        input.endedAt,
+        params.account.documents?.googleDocs?.timeZone,
+      );
       const accountFolder = await params.client.ensureFolder({
         parentId: rootFolderId,
         name: input.sourceAccountLabel,

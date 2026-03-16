@@ -256,6 +256,8 @@ Meetings/
           <meeting doc>
 ```
 
+Use an explicit per-account Google Docs timezone (for example `America/Costa_Rica`) so meetings near midnight UTC are grouped into the correct local day folder.
+
 Recommended ClickUp partitioning:
 
 - allow per-account destination config

@@ -196,3 +196,5 @@ Refresh-token support is now implemented in the plugin. Preferred Google Docs au
 - `clientSecret`
 
 When refresh credentials are present, the plugin can mint a fresh access token automatically after expiry or after a 401 response from Google APIs.
+
+Google Docs folder partitioning is timezone-aware. Set `documents.googleDocs.timeZone` per account so meeting documents are grouped by the intended local calendar day rather than raw UTC.

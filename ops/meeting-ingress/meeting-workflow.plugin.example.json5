@@ -33,6 +33,7 @@
                   clientId: "${DOCUMENT_GOOGLE_DOCS_CIRRUSLABS_DELOITTE_CLIENT_ID}",
                   clientSecret: "${DOCUMENT_GOOGLE_DOCS_CIRRUSLABS_DELOITTE_CLIENT_SECRET}",
                   titlePrefix: "Meeting",
+                  timeZone: "America/Costa_Rica",
                 },
               },
               tasks: {
@@ -77,6 +78,7 @@
                   clientId: "${DOCUMENT_GOOGLE_DOCS_PREDIKTIVE_ACCELA_CLIENT_ID}",
                   clientSecret: "${DOCUMENT_GOOGLE_DOCS_PREDIKTIVE_ACCELA_CLIENT_SECRET}",
                   titlePrefix: "Meeting",
+                  timeZone: "America/Costa_Rica",
                 },
               },
               tasks: {
