@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildFathomWebhookSignature, verifyFathomWebhookSignature } from "./signature.js";
+import {
+  buildFathomWebhookSignature,
+  buildFathomWebhookSignatureV1,
+  verifyFathomWebhookSignature,
+} from "./signature.js";
 
 describe("fathom webhook signature", () => {
   const secret = "test-secret";
@@ -32,6 +36,50 @@ describe("fathom webhook signature", () => {
       verifyFathomWebhookSignature({
         secret,
         signatureHeader: "wrong",
+        rawBody,
+      }),
+    ).toBe(false);
+  });
+
+  it("accepts current documented webhook signature format", () => {
+    const timestamp = `${Math.floor(Date.now() / 1000)}`;
+    const secretPart = Buffer.from("super-secret-key").toString("base64");
+    const docsSecret = `whsec_${secretPart}`;
+    const signature = buildFathomWebhookSignatureV1({
+      secret: docsSecret,
+      webhookId: "msg-123",
+      webhookTimestamp: timestamp,
+      rawBody,
+    });
+
+    expect(
+      verifyFathomWebhookSignature({
+        secret: docsSecret,
+        signatureHeader: `v1,${signature}`,
+        webhookId: "msg-123",
+        webhookTimestamp: timestamp,
+        rawBody,
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects stale timestamp in current documented format", () => {
+    const staleTimestamp = `${Math.floor(Date.now() / 1000) - 1000}`;
+    const secretPart = Buffer.from("super-secret-key").toString("base64");
+    const docsSecret = `whsec_${secretPart}`;
+    const signature = buildFathomWebhookSignatureV1({
+      secret: docsSecret,
+      webhookId: "msg-123",
+      webhookTimestamp: staleTimestamp,
+      rawBody,
+    });
+
+    expect(
+      verifyFathomWebhookSignature({
+        secret: docsSecret,
+        signatureHeader: `v1,${signature}`,
+        webhookId: "msg-123",
+        webhookTimestamp: staleTimestamp,
         rawBody,
       }),
     ).toBe(false);
