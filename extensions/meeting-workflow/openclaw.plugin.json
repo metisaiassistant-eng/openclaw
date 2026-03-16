@@ -119,6 +119,9 @@
                     "titlePrefix": {
                       "type": "string"
                     },
+                    "transcriptsFolderName": {
+                      "type": "string"
+                    },
                     "timeZone": {
                       "type": "string"
                     }

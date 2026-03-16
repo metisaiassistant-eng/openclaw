@@ -80,6 +80,14 @@ Example paths:
 - `~/.openclaw/meeting-workflow/results/prediktive-accela/*.json`
 - `~/.openclaw/meeting-workflow/reports/*.json`
 
+Google Docs hierarchy is now:
+
+```text
+<root>/<Account>/Meeting Transcripts/YYYY/YYYY-MM/YYYY-MM-DD/
+```
+
+The `Meeting Transcripts` segment is configurable through `documents.googleDocs.transcriptsFolderName` and defaults to `Meeting Transcripts`.
+
 ## Account Profiles
 
 The workflow is partitioned by account profile, not by free-form email inference.

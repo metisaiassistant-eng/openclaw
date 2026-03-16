@@ -96,6 +96,8 @@ export function createGoogleDocsDocumentAdapter(params: {
   client: GoogleDocsClient;
 }): MeetingDocumentStorePort {
   const appendedRuns = new Set<string>();
+  const transcriptsFolderName =
+    params.account.documents?.googleDocs?.transcriptsFolderName ?? "Meeting Transcripts";
 
   return {
     id: "google_docs",
@@ -115,8 +117,12 @@ export function createGoogleDocsDocumentAdapter(params: {
         parentId: rootFolderId,
         name: input.sourceAccountLabel,
       });
-      const yearFolder = await params.client.ensureFolder({
+      const transcriptsFolder = await params.client.ensureFolder({
         parentId: accountFolder.id,
+        name: transcriptsFolderName,
+      });
+      const yearFolder = await params.client.ensureFolder({
+        parentId: transcriptsFolder.id,
         name: dateParts.year,
       });
       const monthFolder = await params.client.ensureFolder({
