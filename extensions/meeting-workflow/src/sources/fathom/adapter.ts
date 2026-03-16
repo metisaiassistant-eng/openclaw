@@ -39,10 +39,14 @@ export function createFathomSourceAdapter(
       if (!signature) {
         throw new Error("fathom webhook missing webhook-signature header");
       }
+      const webhookId = readHeader(headers, "webhook-id");
+      const webhookTimestamp = readHeader(headers, "webhook-timestamp");
       const valid = verifyFathomWebhookSignature({
         secret: account.fathom.webhookSecret,
         signatureHeader: signature,
         rawBody,
+        ...(webhookId ? { webhookId } : {}),
+        ...(webhookTimestamp ? { webhookTimestamp } : {}),
       });
       if (!valid) {
         throw new Error("fathom webhook signature verification failed");
