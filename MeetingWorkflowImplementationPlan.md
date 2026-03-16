@@ -258,6 +258,8 @@ Meetings/
 
 Use an explicit per-account Google Docs timezone (for example `America/Costa_Rica`) so meetings near midnight UTC are grouped into the correct local day folder.
 
+Use a dedicated transcript container folder under each account, for example `Meeting Transcripts`, so Drive clearly separates transcripts from any future meeting artifacts.
+
 Recommended ClickUp partitioning:
 
 - allow per-account destination config

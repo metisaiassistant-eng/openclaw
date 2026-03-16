@@ -57,7 +57,11 @@ describe("createGoogleDocsDocumentAdapter", () => {
         fathom: { apiKey: "a", webhookSecret: "b", baseUrl: "https://api.fathom.ai/external/v1" },
         documents: {
           provider: "google_docs",
-          googleDocs: { rootFolderId: "root", timeZone: "UTC" },
+          googleDocs: {
+            rootFolderId: "root",
+            transcriptsFolderName: "Meeting Transcripts",
+            timeZone: "UTC",
+          },
         },
       },
       client: memory.client,
@@ -76,7 +80,8 @@ describe("createGoogleDocsDocumentAdapter", () => {
     });
 
     expect(doc.docId).toBe("doc-meeting-1");
-    expect(memory.folders.size).toBe(4);
+    expect(memory.folders.size).toBe(5);
+    expect([...memory.folders.keys()]).toContain("folder-1:Meeting Transcripts");
   });
 
   it("partitions folders using configured timezone instead of UTC", async () => {
@@ -90,7 +95,11 @@ describe("createGoogleDocsDocumentAdapter", () => {
         fathom: { apiKey: "a", webhookSecret: "b", baseUrl: "https://api.fathom.ai/external/v1" },
         documents: {
           provider: "google_docs",
-          googleDocs: { rootFolderId: "root", timeZone: "America/Costa_Rica" },
+          googleDocs: {
+            rootFolderId: "root",
+            transcriptsFolderName: "Meeting Transcripts",
+            timeZone: "America/Costa_Rica",
+          },
         },
       },
       client: memory.client,
@@ -109,6 +118,7 @@ describe("createGoogleDocsDocumentAdapter", () => {
     });
 
     expect(doc.docId).toBe("doc-meeting-2");
-    expect([...memory.folders.keys()]).toContain("folder-3:2026-03-15");
+    expect([...memory.folders.keys()]).toContain("folder-1:Meeting Transcripts");
+    expect([...memory.folders.keys()]).toContain("folder-4:2026-03-15");
   });
 });
