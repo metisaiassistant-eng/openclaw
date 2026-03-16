@@ -1,6 +1,6 @@
 # Meeting Workflow Implementation Plan
 
-This plan completes the meeting automation feature on top of the working Fathom ingress and `meeting-ops` agent setup.
+This plan completes the meeting automation feature on top of the working account-specific Fathom ingress setup.
 
 ## Goal
 
@@ -47,18 +47,20 @@ This is the best balance of:
 Already working:
 
 - public webhook endpoint via Cloudflare Tunnel
+- account-specific Fathom webhook routes
 - Fathom webhook signature verification
-- payload normalization to a stable meeting event
-- forwarding into `/hooks/meeting-source`
-- dispatch to dedicated `meeting-ops` agent
-
-Not implemented yet:
-
+- direct webhook -> workflow runtime execution
 - summary generation runtime
 - structured action-item extraction runtime
 - Google Docs runtime integration
 - ClickUp runtime integration
-- idempotent workflow orchestration and reporting
+- cached workflow results and reporting
+
+Remaining hardening work:
+
+- optionally persist refreshed Google access tokens back into config or state
+- optionally add service-account-based Google auth as an alternative auth mode
+- keep server runbooks aligned with the production user-service deployment model
 
 ## Final Plugin Structure
 

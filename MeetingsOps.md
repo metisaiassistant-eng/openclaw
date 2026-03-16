@@ -61,6 +61,14 @@ The current production setup no longer depends on hook mappings or a dedicated `
 
 Normal chat traffic stays on the default/main agent.
 
+The production gateway is managed by the OpenClaw-installed **user systemd service**:
+
+- `systemctl --user status openclaw-gateway.service`
+- `systemctl --user restart openclaw-gateway.service`
+- `journalctl --user -u openclaw-gateway.service -n 200 --no-pager`
+
+The old custom system service and the old `meeting-workflow-ingress` plugin config were removed because they caused duplicate supervision/confusing startup behavior.
+
 The meeting workflow persists runtime artifacts under the OpenClaw state directory, including:
 
 - cached workflow results
@@ -90,6 +98,11 @@ Each account profile contains:
 - ClickUp destination config
 - per-step LLM model config
 
+Current account labels:
+
+- `cirruslabs-deloitte` -> `CirrusLabs / Deloitte`
+- `prediktive-accela` -> `Prediktive / Accela`
+
 ## Plugin Configuration
 
 Plugin ID:
@@ -105,11 +118,11 @@ This template defines one account profile per Fathom job/email, each with:
 - `accountKey`
 - `label`
 - `email`
-  -- dedicated `routePath`
-  -- Fathom credentials
-  -- Google Docs destination + access token
-  -- ClickUp destination + API key + assignee ids
-  -- per-step summary/action-item model settings
+- dedicated `routePath`
+- Fathom credentials
+- Google Docs destination + auth config
+- ClickUp destination + API key + assignee ids
+- per-step summary/action-item model settings
 
 Workflow tools exposed by the extension:
 
@@ -128,6 +141,11 @@ For each Fathom account, create a webhook with:
   - `Transcript`
 
 The webhook secret returned by Fathom must match the secret configured in OpenClaw.
+
+Current production scope:
+
+- `Transcript` is required.
+- `Summary` and `Action items` from Fathom are optional because OpenClaw generates its own summary and action items.
 
 ## Validation
 
@@ -169,7 +187,6 @@ Validated live:
 - Keep config templates in `ops/meeting-ingress/` as the source of truth.
 - If Fathom signature checks fail, verify the exact webhook secret for the specific Fathom webhook entry.
 - If public endpoint fails, verify Cloudflare Tunnel service is running and `hooks.metisaiassistant.win` resolves correctly.
-- Google Docs currently uses short-lived access tokens in config; refresh-token or service-account support is the next production hardening step.
 
 Refresh-token support is now implemented in the plugin. Preferred Google Docs auth config is:
 

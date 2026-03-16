@@ -45,11 +45,19 @@ Important values to set per account:
 - `fathom.webhookSecret`
 - `documents.googleDocs.rootFolderId`
 - `documents.googleDocs.accessToken`
+- `documents.googleDocs.refreshToken`
+- `documents.googleDocs.clientId`
+- `documents.googleDocs.clientSecret`
 - `tasks.clickup.listId`
 - `tasks.clickup.apiKey`
 - `tasks.clickup.assigneeIds[]`
 - `models.summary`
 - `models.actionItems`
+
+Current production account keys:
+
+- `cirruslabs-deloitte`
+- `prediktive-accela`
 
 ## 3) Direct runtime execution
 
@@ -82,11 +90,13 @@ openclaw config set plugins.entries.meeting-workflow-ingress.enabled false
 
 ## 6) Restart gateway
 
+Production uses the OpenClaw-installed **user systemd service**.
+
 ```bash
-pkill -f "openclaw gateway run" || true
-nohup openclaw gateway run --bind loopback --port 18789 --force > /tmp/openclaw-gateway.log 2>&1 &
-sleep 2
+systemctl --user restart openclaw-gateway.service
+systemctl --user status openclaw-gateway.service --no-pager
 ss -ltnp | grep 18789
+journalctl --user -u openclaw-gateway.service -n 120 --no-pager
 ```
 
 ## 7) Verify each new route
@@ -94,8 +104,8 @@ ss -ltnp | grep 18789
 Method check:
 
 ```bash
-curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/job-a/webhook"
-curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/job-b/webhook"
+curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/cirruslabs-deloitte/webhook"
+curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/prediktive-accela/webhook"
 ```
 
 Expected: `405 Method Not Allowed`
@@ -119,6 +129,5 @@ If needed:
 ```bash
 openclaw config set plugins.entries.meeting-workflow.enabled false
 openclaw config set plugins.entries.meeting-workflow-ingress.enabled true
-pkill -f "openclaw gateway run" || true
-nohup openclaw gateway run --bind loopback --port 18789 --force > /tmp/openclaw-gateway.log 2>&1 &
+systemctl --user restart openclaw-gateway.service
 ```
