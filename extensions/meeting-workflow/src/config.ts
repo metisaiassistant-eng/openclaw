@@ -23,6 +23,9 @@ export type MeetingWorkflowAccountConfig = {
     googleDocs?: {
       rootFolderId?: string;
       accessToken?: string;
+      refreshToken?: string;
+      clientId?: string;
+      clientSecret?: string;
       titlePrefix?: string;
     };
   };
@@ -188,6 +191,9 @@ export function resolveMeetingWorkflowConfig(pluginConfig: unknown): MeetingWork
               googleDocs: {
                 rootFolderId: asString(googleDocs.rootFolderId),
                 accessToken: asString(googleDocs.accessToken),
+                refreshToken: asString(googleDocs.refreshToken),
+                clientId: asString(googleDocs.clientId),
+                clientSecret: asString(googleDocs.clientSecret),
                 titlePrefix: asString(googleDocs.titlePrefix),
               },
             }

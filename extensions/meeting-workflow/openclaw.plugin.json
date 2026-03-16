@@ -107,6 +107,15 @@
                     "accessToken": {
                       "type": "string"
                     },
+                    "refreshToken": {
+                      "type": "string"
+                    },
+                    "clientId": {
+                      "type": "string"
+                    },
+                    "clientSecret": {
+                      "type": "string"
+                    },
                     "titlePrefix": {
                       "type": "string"
                     }

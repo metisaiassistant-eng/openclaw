@@ -170,3 +170,12 @@ Validated live:
 - If Fathom signature checks fail, verify the exact webhook secret for the specific Fathom webhook entry.
 - If public endpoint fails, verify Cloudflare Tunnel service is running and `hooks.metisaiassistant.win` resolves correctly.
 - Google Docs currently uses short-lived access tokens in config; refresh-token or service-account support is the next production hardening step.
+
+Refresh-token support is now implemented in the plugin. Preferred Google Docs auth config is:
+
+- `accessToken` for immediate use
+- `refreshToken`
+- `clientId`
+- `clientSecret`
+
+When refresh credentials are present, the plugin can mint a fresh access token automatically after expiry or after a 401 response from Google APIs.
