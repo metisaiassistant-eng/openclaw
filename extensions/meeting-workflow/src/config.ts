@@ -27,6 +27,7 @@ export type MeetingWorkflowAccountConfig = {
       clientId?: string;
       clientSecret?: string;
       titlePrefix?: string;
+      timeZone?: string;
     };
   };
   tasks?: {
@@ -195,6 +196,7 @@ export function resolveMeetingWorkflowConfig(pluginConfig: unknown): MeetingWork
                 clientId: asString(googleDocs.clientId),
                 clientSecret: asString(googleDocs.clientSecret),
                 titlePrefix: asString(googleDocs.titlePrefix),
+                timeZone: asString(googleDocs.timeZone),
               },
             }
           : undefined,

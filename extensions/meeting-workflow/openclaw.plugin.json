@@ -118,6 +118,9 @@
                     },
                     "titlePrefix": {
                       "type": "string"
+                    },
+                    "timeZone": {
+                      "type": "string"
                     }
                   }
                 }

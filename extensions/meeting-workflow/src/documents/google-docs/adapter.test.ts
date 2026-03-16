@@ -57,7 +57,7 @@ describe("createGoogleDocsDocumentAdapter", () => {
         fathom: { apiKey: "a", webhookSecret: "b", baseUrl: "https://api.fathom.ai/external/v1" },
         documents: {
           provider: "google_docs",
-          googleDocs: { rootFolderId: "root" },
+          googleDocs: { rootFolderId: "root", timeZone: "UTC" },
         },
       },
       client: memory.client,
@@ -77,5 +77,38 @@ describe("createGoogleDocsDocumentAdapter", () => {
 
     expect(doc.docId).toBe("doc-meeting-1");
     expect(memory.folders.size).toBe(4);
+  });
+
+  it("partitions folders using configured timezone instead of UTC", async () => {
+    const memory = createMemoryGoogleDocsClient();
+    const adapter = createGoogleDocsDocumentAdapter({
+      account: {
+        accountKey: "job-a",
+        label: "Consulting",
+        routePath: "/integrations/source/fathom/job-a/webhook",
+        provider: "fathom",
+        fathom: { apiKey: "a", webhookSecret: "b", baseUrl: "https://api.fathom.ai/external/v1" },
+        documents: {
+          provider: "google_docs",
+          googleDocs: { rootFolderId: "root", timeZone: "America/Costa_Rica" },
+        },
+      },
+      client: memory.client,
+    });
+
+    const doc = await adapter.upsertTranscript({
+      schemaVersion: "meeting-event-v1",
+      meetingId: "meeting-2",
+      source: "fathom",
+      sourceAccountKey: "job-a",
+      sourceAccountLabel: "Consulting",
+      title: "Late Night Sync",
+      endedAt: "2026-03-16T01:20:00Z",
+      transcript: "line 1",
+      participants: ["Carlos"],
+    });
+
+    expect(doc.docId).toBe("doc-meeting-2");
+    expect([...memory.folders.keys()]).toContain("folder-3:2026-03-15");
   });
 });
