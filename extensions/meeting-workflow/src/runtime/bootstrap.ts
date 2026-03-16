@@ -47,10 +47,15 @@ export function createMeetingWorkflowRuntime(params: {
   config: MeetingWorkflowPluginConfig;
   account: MeetingWorkflowAccountConfig;
 }) {
-  const docsAccessToken = params.account.documents?.googleDocs?.accessToken;
+  const docsConfig = params.account.documents?.googleDocs;
   const clickupApiKey = params.account.tasks?.clickup?.apiKey;
-  if (!docsAccessToken) {
-    throw new Error(`google_docs accessToken missing for account ${params.account.accountKey}`);
+  if (
+    !docsConfig?.accessToken &&
+    !(docsConfig?.refreshToken && docsConfig.clientId && docsConfig.clientSecret)
+  ) {
+    throw new Error(
+      `google_docs auth missing for account ${params.account.accountKey} (need accessToken or refreshToken+clientId+clientSecret)`,
+    );
   }
   if (!clickupApiKey) {
     throw new Error(`clickup apiKey missing for account ${params.account.accountKey}`);
@@ -60,7 +65,12 @@ export function createMeetingWorkflowRuntime(params: {
   const actionItemsStep = createMeetingActionItemsStep(params.api);
   const documents = createGoogleDocsDocumentAdapter({
     account: params.account,
-    client: createGoogleDocsApiClient({ accessToken: docsAccessToken }),
+    client: createGoogleDocsApiClient({
+      accessToken: docsConfig?.accessToken,
+      refreshToken: docsConfig?.refreshToken,
+      clientId: docsConfig?.clientId,
+      clientSecret: docsConfig?.clientSecret,
+    }),
   });
   const tasks = createClickUpTaskAdapter({
     account: params.account,

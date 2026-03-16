@@ -4,6 +4,11 @@ type GoogleDriveFile = {
   webViewLink?: string;
 };
 
+type GoogleTokenRefreshResponse = {
+  access_token?: string;
+  expires_in?: number;
+};
+
 type GoogleDriveListResponse = {
   files?: GoogleDriveFile[];
 };
@@ -27,20 +32,91 @@ function escapeDriveQueryValue(value: string): string {
   return value.replace(/'/g, "\\'");
 }
 
+type GoogleDocsAuthConfig = {
+  accessToken?: string;
+  refreshToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+};
+
+function createGoogleTokenProvider(auth: GoogleDocsAuthConfig) {
+  let cachedToken = auth.accessToken?.trim() || "";
+  let cachedExpiresAt = 0;
+
+  async function refreshAccessToken(): Promise<string> {
+    if (!auth.refreshToken || !auth.clientId || !auth.clientSecret) {
+      throw new Error("google docs refresh credentials are not configured");
+    }
+    const body = new URLSearchParams({
+      client_id: auth.clientId,
+      client_secret: auth.clientSecret,
+      refresh_token: auth.refreshToken,
+      grant_type: "refresh_token",
+    });
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
+    if (!response.ok) {
+      throw new Error(`google token refresh failed with status ${response.status}`);
+    }
+    const payload = (await response.json()) as GoogleTokenRefreshResponse;
+    const token = typeof payload.access_token === "string" ? payload.access_token.trim() : "";
+    if (!token) {
+      throw new Error("google token refresh response missing access_token");
+    }
+    const expiresIn = typeof payload.expires_in === "number" ? payload.expires_in : 3600;
+    cachedToken = token;
+    cachedExpiresAt = Date.now() + Math.max(60, expiresIn - 60) * 1000;
+    return cachedToken;
+  }
+
+  return {
+    async getAccessToken(forceRefresh = false): Promise<string> {
+      if (!forceRefresh) {
+        if (cachedToken && (cachedExpiresAt === 0 || Date.now() < cachedExpiresAt)) {
+          return cachedToken;
+        }
+      }
+      if (auth.refreshToken && auth.clientId && auth.clientSecret) {
+        return await refreshAccessToken();
+      }
+      if (cachedToken) {
+        return cachedToken;
+      }
+      throw new Error("google docs access token is not configured");
+    },
+    canRefresh(): boolean {
+      return Boolean(auth.refreshToken && auth.clientId && auth.clientSecret);
+    },
+  };
+}
+
 async function requestJson<T>(params: {
   url: string;
-  accessToken: string;
+  tokenProvider: ReturnType<typeof createGoogleTokenProvider>;
   method?: string;
   body?: unknown;
 }): Promise<T> {
-  const response = await fetch(params.url, {
-    method: params.method ?? "GET",
-    headers: {
-      Authorization: `Bearer ${params.accessToken}`,
-      ...(params.body ? { "Content-Type": "application/json" } : {}),
-    },
-    ...(params.body ? { body: JSON.stringify(params.body) } : {}),
-  });
+  const request = async (forceRefresh = false): Promise<Response> => {
+    const accessToken = await params.tokenProvider.getAccessToken(forceRefresh);
+    return await fetch(params.url, {
+      method: params.method ?? "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...(params.body ? { "Content-Type": "application/json" } : {}),
+      },
+      ...(params.body ? { body: JSON.stringify(params.body) } : {}),
+    });
+  };
+
+  let response = await request(false);
+  if (response.status === 401 && params.tokenProvider.canRefresh()) {
+    response = await request(true);
+  }
   if (!response.ok) {
     throw new Error(`google api request failed with status ${response.status}`);
   }
@@ -60,7 +136,8 @@ function getDocumentText(doc: GoogleDocsResponse): string {
     .join("");
 }
 
-export function createGoogleDocsApiClient(params: { accessToken: string }) {
+export function createGoogleDocsApiClient(params: GoogleDocsAuthConfig) {
+  const tokenProvider = createGoogleTokenProvider(params);
   return {
     async ensureFolder(input: { parentId: string; name: string }): Promise<{ id: string }> {
       const query = [
@@ -74,7 +151,7 @@ export function createGoogleDocsApiClient(params: { accessToken: string }) {
       searchUrl.searchParams.set("fields", "files(id,name)");
       const search = await requestJson<GoogleDriveListResponse>({
         url: searchUrl.toString(),
-        accessToken: params.accessToken,
+        tokenProvider,
       });
       const existing = search.files?.[0];
       if (existing?.id) {
@@ -82,7 +159,7 @@ export function createGoogleDocsApiClient(params: { accessToken: string }) {
       }
       const created = await requestJson<GoogleDriveFile>({
         url: "https://www.googleapis.com/drive/v3/files?fields=id,name",
-        accessToken: params.accessToken,
+        tokenProvider,
         method: "POST",
         body: {
           name: input.name,
@@ -109,7 +186,7 @@ export function createGoogleDocsApiClient(params: { accessToken: string }) {
       searchUrl.searchParams.set("fields", "files(id,name,webViewLink)");
       const search = await requestJson<GoogleDriveListResponse>({
         url: searchUrl.toString(),
-        accessToken: params.accessToken,
+        tokenProvider,
       });
       const existing = search.files?.[0];
       if (existing?.id) {
@@ -120,7 +197,7 @@ export function createGoogleDocsApiClient(params: { accessToken: string }) {
       }
       const created = await requestJson<GoogleDriveFile>({
         url: "https://www.googleapis.com/drive/v3/files?fields=id,webViewLink",
-        accessToken: params.accessToken,
+        tokenProvider,
         method: "POST",
         body: {
           name: `[${input.meetingId}] ${input.title}`,
@@ -137,7 +214,7 @@ export function createGoogleDocsApiClient(params: { accessToken: string }) {
     async replaceDocumentBody(input: { docId: string; body: string }): Promise<void> {
       const doc = await requestJson<GoogleDocsResponse>({
         url: `https://docs.googleapis.com/v1/documents/${input.docId}`,
-        accessToken: params.accessToken,
+        tokenProvider,
       });
       const endIndex = getDocumentEndIndex(doc);
       const requests: unknown[] = [];
@@ -152,7 +229,7 @@ export function createGoogleDocsApiClient(params: { accessToken: string }) {
       }
       await requestJson({
         url: `https://docs.googleapis.com/v1/documents/${input.docId}:batchUpdate`,
-        accessToken: params.accessToken,
+        tokenProvider,
         method: "POST",
         body: { requests },
       });
@@ -161,12 +238,12 @@ export function createGoogleDocsApiClient(params: { accessToken: string }) {
     async appendDocumentBody(input: { docId: string; body: string }): Promise<void> {
       const doc = await requestJson<GoogleDocsResponse>({
         url: `https://docs.googleapis.com/v1/documents/${input.docId}`,
-        accessToken: params.accessToken,
+        tokenProvider,
       });
       const endIndex = Math.max(1, getDocumentEndIndex(doc) - 1);
       await requestJson({
         url: `https://docs.googleapis.com/v1/documents/${input.docId}:batchUpdate`,
-        accessToken: params.accessToken,
+        tokenProvider,
         method: "POST",
         body: {
           requests: [{ insertText: { location: { index: endIndex }, text: input.body } }],
@@ -177,7 +254,7 @@ export function createGoogleDocsApiClient(params: { accessToken: string }) {
     async getDocumentBody(docId: string): Promise<string> {
       const doc = await requestJson<GoogleDocsResponse>({
         url: `https://docs.googleapis.com/v1/documents/${docId}`,
-        accessToken: params.accessToken,
+        tokenProvider,
       });
       return getDocumentText(doc);
     },

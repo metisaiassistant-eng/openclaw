@@ -29,6 +29,9 @@
                 googleDocs: {
                   rootFolderId: "1rj4A0ntEF5ksjNqPtdpRvP2C1MwJzO-I",
                   accessToken: "${DOCUMENT_GOOGLE_DOCS_JOB_A_ACCESS_TOKEN}",
+                  refreshToken: "${DOCUMENT_GOOGLE_DOCS_JOB_A_REFRESH_TOKEN}",
+                  clientId: "${DOCUMENT_GOOGLE_DOCS_JOB_A_CLIENT_ID}",
+                  clientSecret: "${DOCUMENT_GOOGLE_DOCS_JOB_A_CLIENT_SECRET}",
                   titlePrefix: "Meeting",
                 },
               },
@@ -70,6 +73,9 @@
                 googleDocs: {
                   rootFolderId: "1rj4A0ntEF5ksjNqPtdpRvP2C1MwJzO-I",
                   accessToken: "${DOCUMENT_GOOGLE_DOCS_JOB_B_ACCESS_TOKEN}",
+                  refreshToken: "${DOCUMENT_GOOGLE_DOCS_JOB_B_REFRESH_TOKEN}",
+                  clientId: "${DOCUMENT_GOOGLE_DOCS_JOB_B_CLIENT_ID}",
+                  clientSecret: "${DOCUMENT_GOOGLE_DOCS_JOB_B_CLIENT_SECRET}",
                   titlePrefix: "Meeting",
                 },
               },
