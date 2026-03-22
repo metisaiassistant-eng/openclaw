@@ -34,33 +34,39 @@ This personal override keeps ClickUp routing rules local to this OpenClaw host.
 
 Before any action that needs a ClickUp list ID, classify the request and route it using the exact mapping below.
 
-- Personal > Professional > Professional - METIS | ID: 900400309219
+- These mappings are for the ClickUp workspace named `OG's`.
+- The path format is `Space > Folder > List`.
+- The `ID` shown for each entry is the ClickUp **list ID**, not the workspace ID, space ID, or folder ID.
+- Because this account has access to more than one ClickUp workspace, first confirm the task belongs in the `OG's` workspace before using any mapping below.
+
+- `Personal > Professional > Professional - METIS` | list ID: `900400309219`
   - Use for personal professional tasks that are not specific to a particular job or employer.
-- Personal > Misc Personal > Misc Personal - METIS | ID: 164365508
+- `Personal > Misc Personal > Misc Personal - METIS` | list ID: `164365508`
   - Use for miscellaneous personal-life tasks.
   - This is the default fallback only for personal tasks when no better personal list applies.
-- CirrusLabs > CirrusLabs > Administrative - METIS | ID: 901711775568
+- `CirrusLabs > CirrusLabs > Administrative - METIS` | list ID: `901711775568`
   - Use for CirrusLabs-specific administrative tasks.
-- CirrusLabs > Deloitte > Administrative - METIS | ID: 901712191542
+- `CirrusLabs > Deloitte > Administrative - METIS` | list ID: `901712191542`
   - Use for Deloitte administrative tasks.
-- CirrusLabs > Deloitte > Work - METIS | ID: 901711775623
+- `CirrusLabs > Deloitte > Work - METIS` | list ID: `901711775623`
   - Use for Deloitte work tasks such as coding, project work, implementations, and studying or learning about Deloitte projects.
-- Prediktive > Prediktive > Administrative - METIS | ID: 901712050841
+- `Prediktive > Prediktive > Administrative - METIS` | list ID: `901712050841`
   - Use for Prediktive-specific administrative tasks.
-- Prediktive > Accela > Administrative - METIS | ID: 901711983152
+- `Prediktive > Accela > Administrative - METIS` | list ID: `901711983152`
   - Use for Accela administrative tasks.
-- Prediktive > Accela > Work - METIS | ID: 901712191600
+- `Prediktive > Accela > Work - METIS` | list ID: `901712191600`
   - Use for Accela work tasks such as coding, project work, implementations, and studying or learning about Accela projects.
 
 ## Classification policy
 
 1. Decide whether the request is personal or work-related.
-2. For work-related tasks, identify the employer and project context before selecting a list.
-3. Prefer the more specific work list when the request clearly mentions coding, implementation, project work, study, or learning for Deloitte or Accela.
-4. Use the administrative list when the request is clearly operational or administrative.
-5. For personal tasks, prefer the specific personal-professional list when the task is career-oriented but not job-specific.
-6. If no suitable personal list exists, use Personal > Misc Personal > Misc Personal - METIS.
-7. If the task could fit multiple non-personal lists or the destination is unclear, do not guess. Ask the user where to include it.
+2. Confirm the request belongs in the `OG's` workspace, since the account has access to multiple ClickUp workspaces.
+3. For work-related tasks, identify the employer and project context before selecting a list.
+4. Prefer the more specific work list when the request clearly mentions coding, implementation, project work, study, or learning for Deloitte or Accela.
+5. Use the administrative list when the request is clearly operational or administrative.
+6. For personal tasks, prefer the specific personal-professional list when the task is career-oriented but not job-specific.
+7. If no suitable personal list exists, use `Personal > Misc Personal > Misc Personal - METIS`.
+8. If the task could fit multiple non-personal lists, the workspace is not clearly `OG's`, or the destination is otherwise unclear, do not guess. Ask the user where to include it.
 
 ## Execution rules
 
