@@ -1,10 +1,10 @@
 # Meeting Ingress Production Setup
 
-This runbook captures the production setup used for the external meeting ingress plugin.
+This runbook captures a production-style setup for the meeting workflow ingress path.
 
 ## Scope
 
-- Public endpoint: `https://hooks.metisaiassistant.win/integrations/source/fathom/webhook`
+- Public endpoint: `https://hooks.example.com/integrations/source/fathom/acme-team/webhook`
 - OpenClaw gateway bind: `127.0.0.1:18789`
 - Tunnel provider: Cloudflare Tunnel (named tunnel)
 - Source provider: Fathom
@@ -13,7 +13,7 @@ This runbook captures the production setup used for the external meeting ingress
 
 1. OpenClaw repo checked out on server at `/opt/openclaw`.
 2. Plugin code present at `external-plugins/meeting-workflow-ingress/`.
-3. Domain delegated to Cloudflare and Active (`metisaiassistant.win`).
+3. Domain delegated to Cloudflare and active (for example `example.com`).
 4. Installed binaries:
    - `openclaw`
    - `cloudflared`
@@ -86,10 +86,10 @@ Authenticate and create tunnel (run once):
 ```bash
 cloudflared tunnel login
 cloudflared tunnel create openclaw-meeting
-cloudflared tunnel route dns openclaw-meeting hooks.metisaiassistant.win
+cloudflared tunnel route dns openclaw-meeting hooks.example.com
 ```
 
-Create `/etc/cloudflared/config.yml` from `ops/meeting-ingress/cloudflared.config.example.yml` and replace `<TUNNEL_ID>`.
+Create `/etc/cloudflared/config.yml` from `ops/meeting-ingress/cloudflared.config.example.yml` and replace the placeholder values.
 
 Install service and start:
 
@@ -113,7 +113,7 @@ ss -ltnp | grep 18789
 From local machine:
 
 ```bash
-curl -i "https://hooks.metisaiassistant.win/integrations/source/fathom/webhook"
+curl -i "https://hooks.example.com/integrations/source/fathom/acme-team/webhook"
 ```
 
 Expected: `HTTP/2 405` with `{"ok":false,"error":"method not allowed"}`.
@@ -121,10 +121,10 @@ Expected: `HTTP/2 405` with `{"ok":false,"error":"method not allowed"}`.
 Signed POST check (replace secret):
 
 ```bash
-payload='{"id":"m-prod-check-001","title":"Webhook Production Check","ended_at":"2026-03-13T18:00:00Z","transcript":"Carlos: checking production webhook path","participants":[{"name":"Carlos"},{"name":"METIS AI Assistant"}]}'
+payload='{"id":"m-prod-check-001","title":"Webhook Production Check","ended_at":"2026-03-13T18:00:00Z","transcript":"Alex: checking production webhook path","participants":[{"name":"Alex"},{"name":"OpenClaw Ops"}]}'
 sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "<SOURCE_FATHOM_WEBHOOK_SECRET>" -binary | openssl base64)
 
-curl -i -X POST "https://hooks.metisaiassistant.win/integrations/source/fathom/webhook" \
+curl -i -X POST "https://hooks.example.com/integrations/source/fathom/acme-team/webhook" \
   -H "Content-Type: application/json" \
   -H "webhook-signature: $sig" \
   --data-binary "$payload"
