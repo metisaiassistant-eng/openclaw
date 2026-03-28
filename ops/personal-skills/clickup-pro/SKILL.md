@@ -28,7 +28,27 @@ metadata:
 
 # ClickUp Pro
 
-This personal override keeps ClickUp routing rules local to this OpenClaw host.
+This personal override keeps ClickUp routing rules local to this OpenClaw host and enforces Carlos's task-capture defaults.
+
+## Task capture defaults
+
+For every ClickUp task request, apply these defaults before writing anything:
+
+1. Proactively gather or confirm the assignee, start date, due date, and priority.
+2. Interpret all unspecified dates and times in Costa Rica time (`America/Costa_Rica`, GMT-6) unless the user explicitly says otherwise.
+3. If any required fields are missing, ask one concise follow-up question that bundles every missing field together.
+4. If the task is job-related, include the `employment` tag.
+5. If the task is a meeting, also schedule the Google Calendar event.
+6. For meeting scheduling, collect or confirm the start time, end time, and meeting link when they are needed and not already known.
+7. When a meeting link is available, include it in the Google Calendar event description and in the ClickUp task description or follow-up comment.
+8. Use the primary Google Calendar unless the user specifies another calendar.
+
+## Meeting workflow
+
+- Treat meeting tasks as dual writes: ClickUp task plus Google Calendar event.
+- Use `gog calendar create primary --summary "..." --from <iso> --to <iso>` for the calendar event.
+- Use Costa Rica offsets in ISO timestamps (for example `2026-03-28T09:00:00-06:00`) unless the user gave another timezone.
+- If the meeting task is otherwise ready but the link is not available yet, create the task and event first, then add the link later when it becomes available.
 
 ## Routing rules
 
@@ -73,6 +93,7 @@ Before any action that needs a ClickUp list ID, classify the request and route i
 - Once the destination is determined, use the raw ClickUp list ID from the routing table in the command you run.
 - Do not ask the user to remember or provide list IDs when the routing rules already determine the correct destination.
 - If the request conflicts with the routing table or lacks enough context, ask exactly one clarification question about the destination list.
+- When the task metadata is incomplete, prefer one compact clarification that covers assignee, start date, due date, priority, and any meeting-only details in a single question.
 
 ## Security and data handling
 
@@ -98,7 +119,10 @@ Before any action that needs a ClickUp list ID, classify the request and route i
 python3 {baseDir}/scripts/clickup_api.py workspaces
 
 # Create task (preview only)
-python3 {baseDir}/scripts/clickup_api.py create-task <list_id> --name "Fix bug" --priority 2 --due "2026-02-20" --dry-run
+python3 {baseDir}/scripts/clickup_api.py create-task <list_id> --name "Fix bug" --priority 2 --start "2026-02-18" --due "2026-02-20" --tag employment --dry-run
+
+# Create a matching calendar event for a meeting task
+gog calendar create primary --summary "Project kickoff" --from "2026-02-18T09:00:00-06:00" --to "2026-02-18T10:00:00-06:00"
 
 # Protected delete
 python3 {baseDir}/scripts/clickup_api.py delete-task <task_id> --confirm --confirm-task-id <task_id>
@@ -123,8 +147,8 @@ python3 {baseDir}/scripts/clickup_api.py prioritize <list_id> --ai-mode off
 
 - `tasks <list_id>` - List tasks (`--status`, `--assignee`, `--subtasks`)
 - `get-task <task_id>` - Get task details
-- `create-task <list_id>` - Create task (`--name`, `--description`, `--priority`, `--due`, `--assignee`, `--dry-run`)
-- `update-task <task_id>` - Update task (`--name`, `--status`, `--priority`, `--due`, `--assignee`, `--dry-run`)
+- `create-task <list_id>` - Create task (`--name`, `--description`, `--priority`, `--start`, `--due`, `--assignee`, `--tag`, `--dry-run`)
+- `update-task <task_id>` - Update task (`--name`, `--status`, `--priority`, `--start`, `--due`, `--assignee`, `--tag`, `--dry-run`)
 - `delete-task <task_id>` - Delete task (requires `--confirm --confirm-task-id`, supports `--dry-run`)
 
 ### Time tracking
