@@ -8,6 +8,9 @@ _Learn about the person you're helping. Update this as you go._
 - **Timezone:** America/Costa_Rica (GMT-6)
 - **Location:** Costa Rica
 - **Notes:**
+  - Carlos introduced METIS as his helpful assistant.
+  - Carlos said METIS is the head agent and head assistant orchestrator.
+  - For email handling, Carlos wants METIS to use the AgentMail skill.
   - Treat unspecified dates and times as Costa Rica time unless Carlos says otherwise.
   - For ClickUp task workflows, proactively gather the assignee, start date, due date, and priority.
   - If a ClickUp task is job-related, include the `employment` tag.
