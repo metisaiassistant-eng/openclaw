@@ -7,7 +7,10 @@ import {
 import { createChatChannelPlugin } from "openclaw/plugin-sdk/core";
 import { createEmptyChannelDirectoryAdapter } from "openclaw/plugin-sdk/directory-runtime";
 import { resolveOutboundMediaUrls } from "openclaw/plugin-sdk/reply-payload";
-import { createComputedAccountStatusAdapter } from "openclaw/plugin-sdk/status-helpers";
+import {
+  createComputedAccountStatusAdapter,
+  createDefaultChannelRuntimeState,
+} from "openclaw/plugin-sdk/status-helpers";
 import {
   buildTokenChannelStatusSummary,
   clearAccountEntryFields,
@@ -22,6 +25,7 @@ import {
 } from "../api.js";
 import { lineChannelPluginCommon } from "./channel-shared.js";
 import { resolveLineGroupRequireMention } from "./group-policy.js";
+import { probeLineBot } from "./probe.js";
 import { getLineRuntime } from "./runtime.js";
 import { lineSetupAdapter } from "./setup-core.js";
 import { lineSetupWizard } from "./setup-surface.js";
@@ -74,13 +78,7 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = createChatChannelP
     directory: createEmptyChannelDirectoryAdapter(),
     setup: lineSetupAdapter,
     status: createComputedAccountStatusAdapter<ResolvedLineAccount>({
-      defaultRuntime: {
-        accountId: DEFAULT_ACCOUNT_ID,
-        running: false,
-        lastStartAt: null,
-        lastStopAt: null,
-        lastError: null,
-      },
+      defaultRuntime: createDefaultChannelRuntimeState(DEFAULT_ACCOUNT_ID),
       collectStatusIssues: (accounts) => {
         const issues: ChannelStatusIssue[] = [];
         for (const account of accounts) {
@@ -106,7 +104,7 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = createChatChannelP
       },
       buildChannelSummary: ({ snapshot }) => buildTokenChannelStatusSummary(snapshot),
       probeAccount: async ({ account, timeoutMs }) =>
-        getLineRuntime().channel.line.probeLineBot(account.channelAccessToken, timeoutMs),
+        await probeLineBot(account.channelAccessToken, timeoutMs),
       resolveAccountSnapshot: ({ account }) => {
         const configured = Boolean(
           account.channelAccessToken?.trim() && account.channelSecret?.trim(),
@@ -293,6 +291,7 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = createChatChannelP
           throw new Error("LINE channel access token not configured");
         }
         await line.pushMessageLine(id, message, {
+          accountId: account.accountId,
           channelAccessToken: account.channelAccessToken,
         });
       },

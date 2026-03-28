@@ -523,6 +523,7 @@ BlueBubbles is the recommended iMessage path (plugin-backed, configured under `c
 
 - Core key paths covered here: `channels.bluebubbles`, `channels.bluebubbles.dmPolicy`.
 - Optional `channels.bluebubbles.defaultAccount` overrides default account selection when it matches a configured account id.
+- Top-level `bindings[]` entries with `type: "acp"` can bind BlueBubbles conversations to persistent ACP sessions. Use a BlueBubbles handle or target string (`chat_id:*`, `chat_guid:*`, `chat_identifier:*`) in `match.peer.id`. Shared field semantics: [ACP Agents](/tools/acp-agents#channel-specific-settings).
 - Full BlueBubbles channel configuration is documented in [BlueBubbles](/channels/bluebubbles).
 
 ### iMessage
@@ -559,6 +560,7 @@ OpenClaw spawns `imsg rpc` (JSON-RPC over stdio). No daemon or port required.
 - `attachmentRoots` and `remoteAttachmentRoots` restrict inbound attachment paths (default: `/Users/*/Library/Messages/Attachments`).
 - SCP uses strict host-key checking, so ensure the relay host key already exists in `~/.ssh/known_hosts`.
 - `channels.imessage.configWrites`: allow or deny iMessage-initiated config writes.
+- Top-level `bindings[]` entries with `type: "acp"` can bind iMessage conversations to persistent ACP sessions. Use a normalized handle or explicit chat target (`chat_id:*`, `chat_guid:*`, `chat_identifier:*`) in `match.peer.id`. Shared field semantics: [ACP Agents](/tools/acp-agents#channel-specific-settings).
 
 <Accordion title="iMessage SSH wrapper example">
 
@@ -905,8 +907,8 @@ Time format in system prompt. Default: `auto` (OS preference).
 - `imageGenerationModel`: accepts either a string (`"provider/model"`) or an object (`{ primary, fallbacks }`).
   - Used by the shared image-generation capability and any future tool/plugin surface that generates images.
   - Typical values: `google/gemini-3-pro-image-preview` for the native Nano Banana-style flow, `fal/fal-ai/flux/dev` for fal, or `openai/gpt-image-1` for OpenAI Images.
+  - If you select a provider/model directly, configure the matching provider auth/API key too (for example `GEMINI_API_KEY` or `GOOGLE_API_KEY` for `google/*`, `OPENAI_API_KEY` for `openai/*`, `FAL_KEY` for `fal/*`).
   - If omitted, `image_generate` can still infer a best-effort provider default from compatible auth-backed image-generation providers.
-  - Typical values: `google/gemini-3-pro-image-preview`, `fal/fal-ai/flux/dev`, `openai/gpt-image-1`.
 - `pdfModel`: accepts either a string (`"provider/model"`) or an object (`{ primary, fallbacks }`).
   - Used by the `pdf` tool for model routing.
   - If omitted, the PDF tool falls back to `imageModel`, then to best-effort provider defaults.

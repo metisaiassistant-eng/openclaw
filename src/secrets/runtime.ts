@@ -12,6 +12,7 @@ import {
   setRuntimeConfigSnapshot,
   type OpenClawConfig,
 } from "../config/config.js";
+import { migrateLegacyConfig } from "../config/legacy-migrate.js";
 import { resolveUserPath } from "../utils.js";
 import {
   collectCommandSecretAssignmentsFromSnapshot,
@@ -50,9 +51,7 @@ const RUNTIME_PATH_ENV_KEYS = [
   "HOMEPATH",
   "OPENCLAW_HOME",
   "OPENCLAW_STATE_DIR",
-  "CLAWDBOT_STATE_DIR",
   "OPENCLAW_CONFIG_PATH",
-  "CLAWDBOT_CONFIG_PATH",
   "OPENCLAW_AGENT_DIR",
   "PI_CODING_AGENT_DIR",
   "OPENCLAW_TEST_FAST",
@@ -141,7 +140,9 @@ export async function prepareSecretsRuntimeSnapshot(params: {
 }): Promise<PreparedSecretsRuntimeSnapshot> {
   const runtimeEnv = mergeSecretsRuntimeEnv(params.env);
   const sourceConfig = structuredClone(params.config);
-  const resolvedConfig = structuredClone(params.config);
+  const resolvedConfig = structuredClone(
+    migrateLegacyConfig(params.config).config ?? params.config,
+  );
   const context = createResolverContext({
     sourceConfig,
     env: runtimeEnv,

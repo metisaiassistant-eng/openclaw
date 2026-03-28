@@ -4,6 +4,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { Mock, vi } from "vitest";
+import { buildElevenLabsSpeechProvider } from "../../extensions/elevenlabs/test-api.ts";
+import { buildOpenAISpeechProvider } from "../../extensions/openai/test-api.ts";
 import type { MsgContext } from "../auto-reply/templating.js";
 import type { GetReplyOptions, ReplyPayload } from "../auto-reply/types.js";
 import type { ChannelPlugin, ChannelOutboundAdapter } from "../channels/plugins/types.js";
@@ -147,7 +149,18 @@ const createStubPluginRegistry = (): PluginRegistry => ({
   ],
   channelSetups: [],
   providers: [],
-  speechProviders: [],
+  speechProviders: [
+    {
+      pluginId: "openai",
+      source: "test",
+      provider: buildOpenAISpeechProvider(),
+    },
+    {
+      pluginId: "elevenlabs",
+      source: "test",
+      provider: buildElevenLabsSpeechProvider(),
+    },
+  ],
   mediaUnderstandingProviders: [],
   imageGenerationProviders: [],
   webSearchProviders: [],
@@ -298,12 +311,44 @@ export const piSdkMock = hoisted.piSdkMock;
 export const cronIsolatedRun = hoisted.cronIsolatedRun;
 export const agentCommand = hoisted.agentCommand;
 export const getReplyFromConfig: Mock<GetReplyFromConfigFn> = hoisted.getReplyFromConfig;
+export const mockGetReplyFromConfigOnce = (impl: GetReplyFromConfigFn) => {
+  getReplyFromConfig.mockImplementationOnce(impl);
+};
+export const sendWhatsAppMock = hoisted.sendWhatsAppMock;
 
 export const testState = hoisted.testState;
 
 export const testIsNixMode = hoisted.testIsNixMode;
 export const sessionStoreSaveDelayMs = hoisted.sessionStoreSaveDelayMs;
 export const embeddedRunMock = hoisted.embeddedRunMock;
+
+function createEmbeddedRunMockExports() {
+  return {
+    isEmbeddedPiRunActive: (sessionId: string) => embeddedRunMock.activeIds.has(sessionId),
+    abortEmbeddedPiRun: (sessionId: string) => {
+      embeddedRunMock.abortCalls.push(sessionId);
+      return embeddedRunMock.activeIds.has(sessionId);
+    },
+    waitForEmbeddedPiRunEnd: async (sessionId: string) => {
+      embeddedRunMock.waitCalls.push(sessionId);
+      return embeddedRunMock.waitResults.get(sessionId) ?? true;
+    },
+  };
+}
+
+async function importEmbeddedRunMockModule<TModule extends object>(
+  actualPath: string,
+  opts?: { includeActiveCount?: boolean },
+): Promise<TModule> {
+  const actual = await vi.importActual<TModule>(actualPath);
+  return {
+    ...actual,
+    ...createEmbeddedRunMockExports(),
+    ...(opts?.includeActiveCount
+      ? { getActiveEmbeddedRunCount: () => embeddedRunMock.activeIds.size }
+      : {}),
+  };
+}
 
 vi.mock("../agents/pi-model-discovery.js", async () => {
   const actual = await vi.importActual<typeof import("../agents/pi-model-discovery.js")>(
@@ -616,77 +661,29 @@ vi.mock("../config/config.js", async () => {
 });
 
 vi.mock("../agents/pi-embedded.js", async () => {
-  const actual = await vi.importActual<typeof import("../agents/pi-embedded.js")>(
+  return await importEmbeddedRunMockModule<typeof import("../agents/pi-embedded.js")>(
     "../agents/pi-embedded.js",
   );
-  return {
-    ...actual,
-    isEmbeddedPiRunActive: (sessionId: string) => embeddedRunMock.activeIds.has(sessionId),
-    abortEmbeddedPiRun: (sessionId: string) => {
-      embeddedRunMock.abortCalls.push(sessionId);
-      return embeddedRunMock.activeIds.has(sessionId);
-    },
-    waitForEmbeddedPiRunEnd: async (sessionId: string) => {
-      embeddedRunMock.waitCalls.push(sessionId);
-      return embeddedRunMock.waitResults.get(sessionId) ?? true;
-    },
-  };
 });
 
 vi.mock("/src/agents/pi-embedded.js", async () => {
-  const actual = await vi.importActual<typeof import("../agents/pi-embedded.js")>(
+  return await importEmbeddedRunMockModule<typeof import("../agents/pi-embedded.js")>(
     "../agents/pi-embedded.js",
   );
-  return {
-    ...actual,
-    isEmbeddedPiRunActive: (sessionId: string) => embeddedRunMock.activeIds.has(sessionId),
-    abortEmbeddedPiRun: (sessionId: string) => {
-      embeddedRunMock.abortCalls.push(sessionId);
-      return embeddedRunMock.activeIds.has(sessionId);
-    },
-    waitForEmbeddedPiRunEnd: async (sessionId: string) => {
-      embeddedRunMock.waitCalls.push(sessionId);
-      return embeddedRunMock.waitResults.get(sessionId) ?? true;
-    },
-  };
 });
 
 vi.mock("../agents/pi-embedded-runner/runs.js", async () => {
-  const actual = await vi.importActual<typeof import("../agents/pi-embedded-runner/runs.js")>(
+  return await importEmbeddedRunMockModule<typeof import("../agents/pi-embedded-runner/runs.js")>(
     "../agents/pi-embedded-runner/runs.js",
+    { includeActiveCount: true },
   );
-  return {
-    ...actual,
-    isEmbeddedPiRunActive: (sessionId: string) => embeddedRunMock.activeIds.has(sessionId),
-    abortEmbeddedPiRun: (sessionId: string) => {
-      embeddedRunMock.abortCalls.push(sessionId);
-      return embeddedRunMock.activeIds.has(sessionId);
-    },
-    waitForEmbeddedPiRunEnd: async (sessionId: string) => {
-      embeddedRunMock.waitCalls.push(sessionId);
-      return embeddedRunMock.waitResults.get(sessionId) ?? true;
-    },
-    getActiveEmbeddedRunCount: () => embeddedRunMock.activeIds.size,
-  };
 });
 
 vi.mock("/src/agents/pi-embedded-runner/runs.js", async () => {
-  const actual = await vi.importActual<typeof import("../agents/pi-embedded-runner/runs.js")>(
+  return await importEmbeddedRunMockModule<typeof import("../agents/pi-embedded-runner/runs.js")>(
     "../agents/pi-embedded-runner/runs.js",
+    { includeActiveCount: true },
   );
-  return {
-    ...actual,
-    isEmbeddedPiRunActive: (sessionId: string) => embeddedRunMock.activeIds.has(sessionId),
-    abortEmbeddedPiRun: (sessionId: string) => {
-      embeddedRunMock.abortCalls.push(sessionId);
-      return embeddedRunMock.activeIds.has(sessionId);
-    },
-    waitForEmbeddedPiRunEnd: async (sessionId: string) => {
-      embeddedRunMock.waitCalls.push(sessionId);
-      return embeddedRunMock.waitResults.get(sessionId) ?? true;
-    },
-    getActiveEmbeddedRunCount: () => embeddedRunMock.activeIds.size,
-  };
 });
 
 vi.mock("../commands/health.js", () => ({
@@ -715,12 +712,30 @@ vi.mock("../commands/agent.js", () => ({
   agentCommand,
   agentCommandFromIngress: agentCommand,
 }));
+vi.mock("../auto-reply/dispatch.js", async () => {
+  return await vi.importActual<typeof import("../auto-reply/dispatch.js")>(
+    "../auto-reply/dispatch.js",
+  );
+});
+vi.mock("/src/auto-reply/dispatch.js", async () => {
+  return await vi.importActual<typeof import("../auto-reply/dispatch.js")>(
+    "../auto-reply/dispatch.js",
+  );
+});
 vi.mock("../auto-reply/reply.js", () => ({
   getReplyFromConfig: (...args: Parameters<GetReplyFromConfigFn>) =>
     hoisted.getReplyFromConfig(...args),
 }));
 
 vi.mock("/src/auto-reply/reply.js", () => ({
+  getReplyFromConfig: (...args: Parameters<GetReplyFromConfigFn>) =>
+    hoisted.getReplyFromConfig(...args),
+}));
+vi.mock("../auto-reply/reply/get-reply-from-config.runtime.js", () => ({
+  getReplyFromConfig: (...args: Parameters<GetReplyFromConfigFn>) =>
+    hoisted.getReplyFromConfig(...args),
+}));
+vi.mock("/src/auto-reply/reply/get-reply-from-config.runtime.js", () => ({
   getReplyFromConfig: (...args: Parameters<GetReplyFromConfigFn>) =>
     hoisted.getReplyFromConfig(...args),
 }));
@@ -745,6 +760,14 @@ vi.mock("../plugins/loader.js", async () => {
     loadOpenClawPlugins: () => pluginRegistryState.registry,
   };
 });
+vi.mock("../plugins/runtime/runtime-whatsapp-boundary.js", () => ({
+  sendMessageWhatsApp: (...args: unknown[]) =>
+    (hoisted.sendWhatsAppMock as (...args: unknown[]) => unknown)(...args),
+}));
+vi.mock("/src/plugins/runtime/runtime-whatsapp-boundary.js", () => ({
+  sendMessageWhatsApp: (...args: unknown[]) =>
+    (hoisted.sendWhatsAppMock as (...args: unknown[]) => unknown)(...args),
+}));
 
 process.env.OPENCLAW_SKIP_CHANNELS = "1";
 process.env.OPENCLAW_SKIP_CRON = "1";
