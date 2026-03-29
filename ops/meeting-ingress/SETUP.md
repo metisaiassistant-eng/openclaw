@@ -11,7 +11,7 @@ This runbook captures a production-style setup for the meeting workflow ingress 
 
 ## Prerequisites
 
-1. OpenClaw repo checked out on server at `/opt/openclaw`.
+1. OpenClaw repo checked out on server at `~/openclaw-my-main`.
 2. Plugin code present at `external-plugins/meeting-workflow-ingress/`.
 3. Domain delegated to Cloudflare and active (for example `example.com`).
 4. Installed binaries:
@@ -23,7 +23,7 @@ This runbook captures a production-style setup for the meeting workflow ingress 
 Run on server:
 
 ```bash
-openclaw plugins install -l /opt/openclaw/external-plugins/meeting-workflow-ingress
+openclaw plugins install -l "$HOME/openclaw-my-main/external-plugins/meeting-workflow-ingress"
 openclaw plugins enable meeting-workflow-ingress
 ```
 

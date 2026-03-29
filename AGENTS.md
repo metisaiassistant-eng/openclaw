@@ -157,6 +157,24 @@
 - PR submission template (canonical): `.github/pull_request_template.md`
 - Issue submission templates (canonical): `.github/ISSUE_TEMPLATE/`
 
+## Fork + Server Workflow
+
+- For this fork, `my-main` is the only long-lived integration and deployment branch. Start feature branches from `my-main`, merge them back into `my-main`, and do not treat feature branches as the canonical server branch.
+- When asked to update from upstream, integrate `upstream/main` into local `my-main` first, resolve conflicts locally, validate there, push `origin/my-main`, and only then deploy the pushed `my-main` branch to the server. Do not resolve upstream conflicts directly in the live server checkout.
+- Current Linux deployment structure for this fork:
+  - clean deploy checkout: `~/openclaw-my-main`
+  - config: `~/.openclaw/openclaw.json`
+  - agent workspaces: `~/.openclaw/workspaces/<agent>`
+  - managed skills: `~/.openclaw/skills/<skill>`
+  - user service: `~/.config/systemd/user/openclaw-gateway.service`
+  - CLI wrapper: `/usr/local/bin/openclaw`
+- Treat repo paths like `automation/workspaces/*` and repo `skills/*` as versioned source/templates. Do not leave live server-only state there. Before replacing or deleting a checkout, rescue any live workspace or local-only skill into `~/.openclaw/...`.
+- Keep the live deployment checkout clean. Do not store screenshots, generated runtime folders, custom skills, or hand-edited server state inside `~/openclaw-my-main`. If the live checkout is dirty, stop and either move the live state out of the repo or deploy from a fresh clean clone.
+- The systemd service and `/usr/local/bin/openclaw` wrapper must point at the same checkout. When one moves, update the other in the same task and verify both.
+- Canonical server deploy flow for this fork: `git fetch origin` -> `git switch my-main` -> `git pull --ff-only origin my-main` -> `corepack pnpm install` -> `corepack pnpm build` -> `systemctl --user restart openclaw-gateway.service` -> verify with `systemctl --user status`, `ss -ltnp | grep 18789`, and `openclaw channels status --probe`.
+- Some older internal runbooks still mention `/opt/openclaw`. Treat that path as stale for this fork unless the user explicitly says the server was rebuilt that way.
+- For fork sync, server login, deploys, cutovers, or cleanup on this fork, read the `openclaw-fork-ops` skill first.
+
 ## Git Notes
 
 - If `git branch -d/-D <branch>` is policy-blocked, delete the local ref directly: `git update-ref -d refs/heads/<branch>`.
