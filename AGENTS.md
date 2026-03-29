@@ -160,6 +160,7 @@
 ## Fork + Server Workflow
 
 - For this fork, `my-main` is the only long-lived integration and deployment branch. Start feature branches from `my-main`, merge them back into `my-main`, and do not treat feature branches as the canonical server branch.
+- Default to a repo-first workflow for this fork. If a requested change should persist for the fork, make it in the repo on a feature branch, land it in `my-main`, push `origin/my-main`, and only then pull/deploy `my-main` on the server. Do not edit the live server copy first unless the user explicitly says the change is server-only runtime state or an emergency hotfix.
 - When asked to update from upstream, integrate `upstream/main` into local `my-main` first, resolve conflicts locally, validate there, push `origin/my-main`, and only then deploy the pushed `my-main` branch to the server. Do not resolve upstream conflicts directly in the live server checkout.
 - Current Linux deployment structure for this fork:
   - clean deploy checkout: `~/openclaw-my-main`
@@ -169,6 +170,7 @@
   - user service: `~/.config/systemd/user/openclaw-gateway.service`
   - CLI wrapper: `/usr/local/bin/openclaw`
 - Treat repo paths like `automation/workspaces/*` and repo `skills/*` as versioned source/templates. Do not leave live server-only state there. Before replacing or deleting a checkout, rescue any live workspace or local-only skill into `~/.openclaw/...`.
+- Treat `~/.openclaw/openclaw.json`, `~/.openclaw/workspaces/*`, `~/.openclaw/skills/*`, and `~/.config/systemd/user/openclaw-gateway.service` as live server state. Change them directly only for runtime-only values (for example secrets, auth, machine-specific paths) or an explicitly approved emergency; otherwise, make the equivalent repo change first and deploy it through `my-main`.
 - Keep the live deployment checkout clean. Do not store screenshots, generated runtime folders, custom skills, or hand-edited server state inside `~/openclaw-my-main`. If the live checkout is dirty, stop and either move the live state out of the repo or deploy from a fresh clean clone.
 - The systemd service and `/usr/local/bin/openclaw` wrapper must point at the same checkout. When one moves, update the other in the same task and verify both.
 - Canonical server deploy flow for this fork: `git fetch origin` -> `git switch my-main` -> `git pull --ff-only origin my-main` -> `corepack pnpm install` -> `corepack pnpm build` -> `systemctl --user restart openclaw-gateway.service` -> verify with `systemctl --user status`, `ss -ltnp | grep 18789`, and `openclaw channels status --probe`.
