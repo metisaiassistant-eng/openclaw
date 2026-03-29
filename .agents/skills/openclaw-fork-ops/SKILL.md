@@ -32,6 +32,7 @@ If an older runbook still assumes `/opt/openclaw`, translate it to the structure
 5. Keep the systemd unit and `/usr/local/bin/openclaw` wrapper pointed at the same checkout.
 6. Before deleting or replacing a checkout, rescue any live workspace or local-only skill into `~/.openclaw/...`.
 7. Prefer SSH key auth. If the user explicitly gives a password, use it only for the current task and do not write it to disk, config, or shell startup files.
+8. Default to repo-first changes. If the change should persist for the fork, make it on a feature branch, land it in `my-main`, push `origin/my-main`, and only then pull/deploy on the server. Direct edits under `~/.openclaw` or the live service config are only for runtime-only state or an explicitly approved emergency.
 
 ## Structural Learnings
 
